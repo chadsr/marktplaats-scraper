@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "mpscraper"
+version = "0.1.0"
+description = "Marktplaats.nl (Dutch Classifieds) Listing Scraper"
+authors = ["Ross <git@ross.ch>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+beautifulsoup4 = "^4.12.3"
+selenium = "^4.21.0"
+PyVirtualDisplay = "^3.0"
+tqdm = "^4.66.4"
+pandas = "^2.2.2"
+lxml = "^5.2.2"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.4.6"
+pytest = "^8.2.1"
+pytest-cov = "^5.0.0"
+bandit = "^1.7.8"
+pre-commit = "^3.7.1"
+
+[tool.ruff]
+line-length = 100
+
+[tool.bandit]
+exclude = ["test_*.py"]
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

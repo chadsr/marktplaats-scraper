@@ -1,0 +1,102 @@
+name: Python Tests
+on:
+  pull_request:
+    paths:
+      - "**/*.py"
+      - "poetry.lock"
+      - "pyproject.toml"
+      - ".github/workflows/test.yml"
+  push:
+    branches:
+      - "main"
+    paths:
+      - "**/*.py"
+      - "poetry.lock"
+      - "pyproject.toml"
+      - ".github/workflows/test.yml"
+env:
+  PYTHON_VERSION: "3.12"
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: pre-commit/action@v3.0.1
+        env:
+          RUFF_OUTPUT_FORMAT: github
+  test:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        python-version: ["3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Removing previous chrome instances on runner
+        run: sudo apt-get purge -y google-chrome-stable
+      - name: Install Chromium & xvfb
+        run: |
+          sudo apt-get install -y chromium-browser xvfb
+          echo "CHROMIUM_PATH=$(which chromium)" >> "$GITHUB_ENV" && echo env.CHROMIUM_PATH
+          echo "CHROMIUM_VERSION=$(chromium --version)" >> "$GITHUB_ENV" && echo env.CHROMIUM_VERSION
+      - name: Load cached Chromedriver
+        id: cached-chromedriver
+        uses: actions/cache@v3
+        with:
+          path: /usr/local/bin/chromedriver
+          key: chromedriver-${{ runner.os }}-${{ env.CHROMIUM_VERSION }}
+      - name: Install Chromedriver
+        if: steps.cached-chromedriver.outputs.cache-hit != "true"
+        run: |
+          CHROMIUM_FULL_VERSION=${CHROMIUM_VERSION%%.*}
+          CHROMIUM_MAJOR_VERSION=${CHROMIUM_FULL_VERSION//[!0-9]}
+          export CHROMEDRIVER_VERSION=`curl -s https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROMIUM_MAJOR_VERSION%%.*}`
+          curl -L -O "https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip"
+          unzip chromedriver_linux64.zip && chmod +x chromedriver && sudo mv chromedriver /usr/local/bin
+      - name: Set ChromeDriver path
+        run: |
+          echo "CHROMEDRIVER_PATH=/usr/local/bin/chromedriver" >> "$GITHUB_ENV" && echo env.CHROMEDRIVER_PATH
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load cached Poetry venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles("**/*/poetry.lock") }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != "true"
+        run: |
+          poetry install --no-interaction --no-root
+      - name: Run Pytest
+        run: |
+          source $VENV
+          pytest -vv --cov=./ --cov-report=xml ./
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+  security:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}

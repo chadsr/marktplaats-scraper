@@ -1,0 +1,8 @@
+*.log
+typings/
+.pytest_cache/
+.benchmarks/
+prof/
+__pycache__/
+dist/
+test_*.py
