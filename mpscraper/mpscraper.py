@@ -34,6 +34,7 @@ SELECT_ELEM_ID = "categoryId"
 DATA_ELEM_ID = "__NEXT_DATA__"
 LISTING_DATA_ELEM_ID = "__CONFIG__"
 LISTING_ROOT_ID = "listing-root"
+ALL_CATEGORIES_ID = 0
 
 # if a listing ID starts with this, it seems to be a sponsored advertisement post we want to ignore
 MARKTPLAATS_ADVERTISEMENT_PREFIX = "a"
@@ -106,7 +107,7 @@ class MpScraper:
 
     def __get_subcategories(self, parent_category: Category) -> set[Category]:
         """Return any existing sub-category URLs for the given category URL."""
-        subcategory_urls: set[Category] = set()
+        subcategories: set[Category] = set()
 
         self.__driver.get(parent_category.url)
 
@@ -118,7 +119,7 @@ class MpScraper:
                 categories_present
             )
         except TimeoutException:
-            return subcategory_urls
+            return subcategories
 
         soup = self.__driver.get_soup()
 
@@ -132,31 +133,60 @@ class MpScraper:
                 tag_name=category_id_elems_name, attrs=category_id_elems_attrs
             )
 
-        subcategory_elems = soup.find_all("li", attrs={"hz-Level-two"})
-        for subcategory_elem in subcategory_elems:
-            if isinstance(subcategory_elem, Tag):
-                subcategory_link = subcategory_elem.find("a", attrs={"hz-Link"})
-                if isinstance(subcategory_link, Tag):
-                    subcategory_href = subcategory_link.attrs["href"]
-                    subcategory_name = subcategory_link.get_text(strip=True).split("(")[
-                        0
-                    ]
+        category_id_list_name = "div"
+        category_id_list_attrs = {"id": parent_category.id}
+        category_id_list = soup.find(category_id_list_name, attrs=category_id_list_attrs)
+        if not isinstance(category_id_list, Tag):
+            raise ElementNotFound(
+                tag_name=category_id_list_name, attrs=category_id_list_attrs
+            )
+        
+        category_hrefs: dict[str, str] = {}
+        subcategory_a_elem_name = "a"
+        subcategory_a_elem_attrs = {"class": "category-name"}
+        subcategory_a_elems = soup.findAll(subcategory_a_elem_name, attrs=subcategory_a_elem_attrs)
+        for subcategory_a_elem in subcategory_a_elems:
+            if not isinstance(subcategory_a_elem, Tag):
+                raise ElementNotFound(tag_name=subcategory_a_elem)
 
-                    subcategory_option_elem_name = "option"
-                    subcategory_option_elem = category_id_elems.find(
-                        name=subcategory_option_elem_name, string=subcategory_name
-                    )
-                    if not isinstance(subcategory_option_elem, Tag):
-                        raise ElementNotFound(tag_name=subcategory_option_elem_name)
+            if "href" not in subcategory_a_elem.attrs:
+                # TODO: Raise error
+                continue
 
-                    subcategory_id = int(subcategory_option_elem.attrs["value"])
-                    subcategory_url = f"{MARTKPLAATS_BASE_URL}{subcategory_href}"
-                    subcategory = Category(id=subcategory_id, url=subcategory_url)
-                    subcategory_urls.add(subcategory)
-            else:
-                raise ElementNotFound(subcategory_elem)
+            category_name = str(subcategory_a_elem.contents[0])
+            category_href = str(subcategory_a_elem.attrs["href"])
+            category_hrefs[category_name] = category_href
 
-        return subcategory_urls
+        subcategory_option_elem_name = "option"
+        subcategory_option_elems = category_id_elems.findAll(
+            name=subcategory_option_elem_name
+        )
+        for subcategory_option_elem in subcategory_option_elems:
+            if not isinstance(subcategory_option_elem, Tag):
+                raise ElementNotFound(tag_name=subcategory_option_elem_name)
+
+            subcategory_name = str(subcategory_option_elem.contents[0])
+
+            if "value" not in subcategory_option_elem.attrs:
+                continue
+
+            subcategory_value = subcategory_option_elem.attrs["value"]
+            if subcategory_value == "":
+                continue
+
+            subcategory_id = int(subcategory_value)
+
+            if subcategory_id == parent_category.id or subcategory_id == ALL_CATEGORIES_ID:
+                continue
+
+            # get subcategory href
+            subcategory_href = category_hrefs[subcategory_name]
+
+            subcategory_url = f"{MARTKPLAATS_BASE_URL}{subcategory_href}"
+            subcategory = Category(id=subcategory_id, url=subcategory_url)
+            subcategories.add(subcategory)
+
+        return subcategories
 
     def listings_count(self, category: Category) -> int:
         """Return the listings count for the given category URL."""
