@@ -21,7 +21,6 @@ MARKTPLAATS_403_URL = "https://www.marktplaats.nl/403/"
 
 
 class MPDriver(WebDriver):
-
     def __init__(
         self,
         base_url: str,
@@ -43,9 +42,7 @@ class MPDriver(WebDriver):
         chrome_service: ChromeService | None = None
         if chromedriver_path:
             chrome_service = ChromeService(executable_path=chromedriver_path)
-            super(MPDriver, self).__init__(
-                options=chrome_options, service=chrome_service
-            )
+            super(MPDriver, self).__init__(options=chrome_options, service=chrome_service)
         else:
             super(MPDriver, self).__init__(options=chrome_options)
 
@@ -57,9 +54,7 @@ class MPDriver(WebDriver):
         self.get(url)
         element_present = EC.presence_of_element_located((By.ID, MODAL_ID))
         WebDriverWait(self, ACCEPT_COOKIES_TIMEOUT_SECONDS).until(element_present)
-        accept_btn = self.find_element(
-            by=By.CSS_SELECTOR, value=BTN_COOKIES_ACCEPT_ARIA_LABEL
-        )
+        accept_btn = self.find_element(by=By.CSS_SELECTOR, value=BTN_COOKIES_ACCEPT_ARIA_LABEL)
         accept_btn.click()
 
     def __get_forbidden_iframe(self) -> WebElement | None:
