@@ -116,4 +116,4 @@ jobs:
       - name: Run Bandit
         run: |-
           source .venv/bin/activate
-          bandit ./mpscraper
+          bandit -r ./mpscraper
