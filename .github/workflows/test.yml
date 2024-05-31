@@ -102,3 +102,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+      - name: Run Bandit
+        run: |-
+          poetry run bandit ./mpscraper
