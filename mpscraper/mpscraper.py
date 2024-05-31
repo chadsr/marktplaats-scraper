@@ -66,7 +66,6 @@ class Category(NamedTuple):
 
 
 class MpScraper:
-
     def __init__(
         self,
         headless: bool,
@@ -112,12 +111,8 @@ class MpScraper:
         self.__driver.get(parent_category.url)
 
         try:
-            categories_present = EC.presence_of_element_located(
-                (By.ID, str(parent_category.id))
-            )
-            WebDriverWait(self.__driver, self.__timeout_seconds).until(
-                categories_present
-            )
+            categories_present = EC.presence_of_element_located((By.ID, str(parent_category.id)))
+            WebDriverWait(self.__driver, self.__timeout_seconds).until(categories_present)
         except TimeoutException:
             return subcategories
 
@@ -125,22 +120,16 @@ class MpScraper:
 
         category_id_elems_name = "select"
         category_id_elems_attrs = {"id": SELECT_ELEM_ID}
-        category_id_elems = soup.find(
-            name=category_id_elems_name, attrs=category_id_elems_attrs
-        )
+        category_id_elems = soup.find(name=category_id_elems_name, attrs=category_id_elems_attrs)
         if not isinstance(category_id_elems, Tag):
-            raise ElementNotFound(
-                tag_name=category_id_elems_name, attrs=category_id_elems_attrs
-            )
+            raise ElementNotFound(tag_name=category_id_elems_name, attrs=category_id_elems_attrs)
 
         category_id_list_name = "div"
         category_id_list_attrs = {"id": str(parent_category.id)}
         category_id_list = soup.find(category_id_list_name, attrs=category_id_list_attrs)
         if not isinstance(category_id_list, Tag):
-            raise ElementNotFound(
-                tag_name=category_id_list_name, attrs=category_id_list_attrs
-            )
-        
+            raise ElementNotFound(tag_name=category_id_list_name, attrs=category_id_list_attrs)
+
         category_hrefs: dict[str, str] = {}
         subcategory_a_elem_name = "a"
         subcategory_a_elem_attrs = {"class": "category-name"}
@@ -158,9 +147,7 @@ class MpScraper:
             category_hrefs[category_name] = category_href
 
         subcategory_option_elem_name = "option"
-        subcategory_option_elems = category_id_elems.findAll(
-            name=subcategory_option_elem_name
-        )
+        subcategory_option_elems = category_id_elems.findAll(name=subcategory_option_elem_name)
         for subcategory_option_elem in subcategory_option_elems:
             if not isinstance(subcategory_option_elem, Tag):
                 raise ElementNotFound(tag_name=subcategory_option_elem_name)
@@ -203,17 +190,13 @@ class MpScraper:
         if isinstance(label_altijd, Tag):
             altijd_counter_name = "span"
             altijd_counter_attrs = {"class": "hz-Text"}
-            altijd_counter = label_altijd.find(
-                name=altijd_counter_name, attrs=altijd_counter_attrs
-            )
+            altijd_counter = label_altijd.find(name=altijd_counter_name, attrs=altijd_counter_attrs)
             if isinstance(altijd_counter, Tag):
                 count_text = altijd_counter.get_text(strip=True)
                 count_text = re.sub("[.,()]", "", count_text)
                 return int(count_text)
             else:
-                raise ElementNotFound(
-                    tag_name=altijd_counter_name, attrs=altijd_counter_attrs
-                )
+                raise ElementNotFound(tag_name=altijd_counter_name, attrs=altijd_counter_attrs)
         else:
             raise ElementNotFound(tag_name=label_altijd_name, attrs=label_altijd_attrs)
 
@@ -235,13 +218,9 @@ class MpScraper:
             "class": "Description-description",
             "data-collapsable": "description",
         }
-        description_div = page.find(
-            name=description_div_name, attrs=description_div_attrs
-        )
+        description_div = page.find(name=description_div_name, attrs=description_div_attrs)
         if not isinstance(description_div, Tag):
-            raise ElementNotFound(
-                tag_name=description_div_name, attrs=description_div_attrs
-            )
+            raise ElementNotFound(tag_name=description_div_name, attrs=description_div_attrs)
 
         description = description_div.get_text(separator=" ", strip=True)
 
@@ -252,15 +231,11 @@ class MpScraper:
         attribute_items = page.find_all("div", {"class": "Attributes-item"})
         for attribute_item in attribute_items:
             if isinstance(attribute_item, Tag):
-                attribute_label = attribute_item.find(
-                    "strong", {"class": "Attributes-label"}
-                )
+                attribute_label = attribute_item.find("strong", {"class": "Attributes-label"})
                 if isinstance(attribute_label, Tag):
                     attribute_label_text = attribute_label.get_text(strip=True).lower()
 
-                    attribute_value = attribute_item.find(
-                        "span", {"class": "Attributes-value"}
-                    )
+                    attribute_value = attribute_item.find("span", {"class": "Attributes-value"})
                     if isinstance(attribute_value, Tag):
                         attribute_text = attribute_value.get_text(strip=True)
                         values = set()
@@ -299,16 +274,11 @@ class MpScraper:
         )
 
     def get_listings(
-        self,
-        parent_category: Category,
-        limit: int,
-        existing_item_ids: set[str] | None = None,
+        self, parent_category: Category, limit: int, existing_item_ids: set[str] | None = None
     ) -> list[Listing]:
         """Return a list of Marktplaats listings for the given category, up to limit in quantity, and excluding item_ids from existing_item_ids."""
         listings: list[Listing] = []
-        item_ids: set[str] = (
-            existing_item_ids.copy() if existing_item_ids is not None else set()
-        )
+        item_ids: set[str] = existing_item_ids.copy() if existing_item_ids is not None else set()
         parent_category_slug = parent_category.url.split("/")[-2]
 
         listings_count = self.listings_count(parent_category)
@@ -331,9 +301,7 @@ class MpScraper:
                 )
                 categories = [parent_category]
         except Exception as exc:
-            raise ListingsError(
-                listings=listings, msg="Failed to get subcategory URLs"
-            ) from exc
+            raise ListingsError(listings=listings, msg="Failed to get subcategory URLs") from exc
 
         with tqdm(
             desc=f'Category "{parent_category_slug}" Progress',
@@ -345,9 +313,7 @@ class MpScraper:
                 current_page = 1
                 while len(listings) < max_listings:
                     try:
-                        url_with_opts = self.__get_url_with_options(
-                            category_url, current_page
-                        )
+                        url_with_opts = self.__get_url_with_options(category_url, current_page)
                         self.__driver.get(url_with_opts)
 
                         page_select_elem_present = EC.presence_of_element_located(
@@ -429,9 +395,7 @@ class MpScraper:
                             # Get category ID
                             child_category_id: int = int(res_listing["categoryId"])
                             if child_category_id != category_id:
-                                raise UnexpectedCategoryId(
-                                    child_category_id, category_id
-                                )
+                                raise UnexpectedCategoryId(child_category_id, category_id)
 
                             # Get basic info
                             title: str = format_text(str(res_listing["title"]))
@@ -451,9 +415,7 @@ class MpScraper:
                                 got_details = False
                                 while not got_details:
                                     try:
-                                        listing_details = self.__get_listing_details(
-                                            listing_url
-                                        )
+                                        listing_details = self.__get_listing_details(listing_url)
 
                                         got_details = True
                                     except ForbiddenError:
