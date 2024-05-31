@@ -96,9 +96,7 @@ class TestMpScraper:
         for limit in limits:
             item_ids = set()
 
-            listings = mp_scraper.get_listings(
-                parent_category=TEST_CATEGORY, limit=limit
-            )
+            listings = mp_scraper.get_listings(parent_category=TEST_CATEGORY, limit=limit)
             assert len(listings) == limit
             for listing in listings:
                 assert isinstance(listing, Listing)
@@ -107,15 +105,11 @@ class TestMpScraper:
                 assert listing.item_id not in item_ids
                 item_ids.add(listing.item_id)
 
-    def test_get_listings_existing_item_ids(
-        self, mp_scraper: MpScraper, display: Display
-    ):
+    def test_get_listings_existing_item_ids(self, mp_scraper: MpScraper, display: Display):
         """
         Assert that item_ids passed to existing_item_ids are excluded from the results
         """
-        listings_initial = mp_scraper.get_listings(
-            parent_category=TEST_CATEGORY, limit=LIMIT_SMALL
-        )
+        listings_initial = mp_scraper.get_listings(parent_category=TEST_CATEGORY, limit=LIMIT_SMALL)
         assert len(listings_initial) == LIMIT_SMALL
         item_ids_initial = set([listing.item_id for listing in listings_initial])
         assert len(item_ids_initial) == len(listings_initial)
