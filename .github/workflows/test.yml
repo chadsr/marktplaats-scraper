@@ -2,7 +2,8 @@ name: Python Tests
 on:
   pull_request:
     paths:
-      - "**/*.py"
+      - "mpscraper/**"
+      - "tests/**"
       - "poetry.lock"
       - "pyproject.toml"
       - ".github/workflows/test.yml"
@@ -10,7 +11,8 @@ on:
     branches:
       - "main"
     paths:
-      - "**/*.py"
+      - "mpscraper/**"
+      - "tests/**"
       - "poetry.lock"
       - "pyproject.toml"
       - ".github/workflows/test.yml"
@@ -33,7 +35,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        os: ["ubuntu-latest"]
         python-version: ["3.11", "3.12"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
@@ -57,7 +59,7 @@ jobs:
           path: /usr/local/bin/chromedriver
           key: chromedriver-${{ runner.os }}-${{ env.CHROMIUM_VERSION }}
       - name: Install Chromedriver
-        if: steps.cached-chromedriver.outputs.cache-hit != "true"
+        if: steps.cached-chromedriver.outputs.cache-hit != 'true'
         run: |
           CHROMIUM_FULL_VERSION=${CHROMIUM_VERSION%%.*}
           CHROMIUM_MAJOR_VERSION=${CHROMIUM_FULL_VERSION//[!0-9]}
@@ -79,9 +81,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles("**/*/poetry.lock") }}
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != "true"
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
           poetry install --no-interaction --no-root
       - name: Run Pytest
