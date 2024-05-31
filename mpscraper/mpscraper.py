@@ -134,7 +134,7 @@ class MpScraper:
             )
 
         category_id_list_name = "div"
-        category_id_list_attrs = {"id": parent_category.id}
+        category_id_list_attrs = {"id": str(parent_category.id)}
         category_id_list = soup.find(category_id_list_name, attrs=category_id_list_attrs)
         if not isinstance(category_id_list, Tag):
             raise ElementNotFound(
