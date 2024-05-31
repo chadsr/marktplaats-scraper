@@ -72,11 +72,9 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: latest
           virtualenvs-create: true
           virtualenvs-in-project: true
-          installer-parallel: true
-      - name: Load cached Poetry venv
+      - name: Load cached venv
         id: cached-poetry-dependencies
         uses: actions/cache@v4
         with:
@@ -84,11 +82,10 @@ jobs:
           key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
-          poetry install --no-interaction --no-root
+        run: poetry install --no-interaction --no-root
       - name: Run Pytest
         run: |
-          source $VENV
+          source .venv/bin/activate
           pytest -vv --cov=./ --cov-report=xml ./
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -104,4 +101,5 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Run Bandit
         run: |-
-          poetry run bandit ./mpscraper
+          source .venv/bin/activate
+          bandit ./mpscraper
