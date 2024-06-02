@@ -46,15 +46,16 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Removing previous chrome instances on runner
-        run: sudo apt-get purge -y google-chrome-stable
+        run: sudo apt-get purge -y google-chrome-stable || true
       - name: Install Chromium & xvfb
         run: |
+          sudo apt-get update
           sudo apt-get install -y chromium-browser xvfb
           echo "CHROMIUM_PATH=$(which chromium)" >> "$GITHUB_ENV" && echo env.CHROMIUM_PATH
           echo "CHROMIUM_VERSION=$(chromium --version)" >> "$GITHUB_ENV" && echo env.CHROMIUM_VERSION
       - name: Load cached Chromedriver
         id: cached-chromedriver
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /usr/local/bin/chromedriver
           key: chromedriver-${{ runner.os }}-${{ env.CHROMIUM_VERSION }}
