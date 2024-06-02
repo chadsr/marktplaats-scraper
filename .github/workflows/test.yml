@@ -48,7 +48,7 @@ jobs:
       - name: Install xvfb
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb
+          sudo apt-get install -y xvfb chromium-browser
       - name: Setup Chromedriver
         uses: nanasess/setup-chromedriver@v2
         env:
