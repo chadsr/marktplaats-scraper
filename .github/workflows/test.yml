@@ -45,16 +45,18 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Removing previous chrome instances on runner
-        run: sudo apt-get purge -y google-chrome-stable || true
-      - name: Install Chromium & xvfb
+      - name: Install xvfb
         run: |
           sudo apt-get update
-          sudo apt-get install -y chromium-browser xvfb
+          sudo apt-get install -y xvfb
       - name: Setup Chromedriver
         uses: nanasess/setup-chromedriver@v2
+        env:
+          CHROMEAPP: chromium-browser
       - name: Run Chromedriver
         run: |
+          echo "CHROMIUM_PATH=$(which chromium)" >> "$GITHUB_ENV"
+          echo "CHROMEDRIVER_PATH=$(which chromedriver)" >> "$GITHUB_ENV" 
           export DISPLAY=:99
           chromedriver --url-base=/wd/hub &
           sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
