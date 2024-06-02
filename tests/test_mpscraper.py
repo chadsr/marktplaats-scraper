@@ -11,8 +11,8 @@ from mpscraper.mpscraper import (
     Category,
     MpScraper,
     format_text,
-    Listing,
 )
+from mpscraper.listing import Listing
 
 from mpscraper.utils import diff_hours
 from mpscraper.display import has_display, get_virtual_display

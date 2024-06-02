@@ -23,7 +23,7 @@ from .exceptions import (
     ForbiddenError,
     UnexpectedCategoryId,
 )
-from .types import Listing, ListingDetails
+from .listing import Listing, ListingDetails
 
 
 MARTKPLAATS_BASE_URL = "https://www.marktplaats.nl"

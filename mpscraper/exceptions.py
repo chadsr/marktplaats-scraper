@@ -1,4 +1,4 @@
-from .types import Listing
+from .listing import Listing
 
 
 class ListingsError(Exception):
