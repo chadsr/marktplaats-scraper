@@ -19,10 +19,6 @@ from mpscraper.display import has_display, get_virtual_display
 from mpscraper.driver import MPDriver
 
 TEST_RUN_HEADLESS = False
-GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS")
-if GITHUB_ACTIONS:
-    TEST_RUN_HEADLESS = True
-
 CHROMIUM_PATH = os.getenv("CHROMIUM_PATH")
 CHROMEDRIVER_PATH = os.getenv("CHROMEDRIVER_PATH")
 
