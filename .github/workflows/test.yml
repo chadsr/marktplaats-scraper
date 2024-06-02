@@ -45,7 +45,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Install xvfb
+      - name: Install xvfb & chromium-browser
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb chromium-browser
