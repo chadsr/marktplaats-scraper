@@ -1,7 +1,6 @@
 import pandas as pd
 from datetime import datetime, timezone
 from pathlib import Path
-from selenium.webdriver.chrome.webdriver import WebDriver
 
 from .exceptions import EmptyDataFrameError
 

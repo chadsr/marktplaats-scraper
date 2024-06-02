@@ -59,9 +59,7 @@ class DisplayNotFound(Exception):
 
 def get_args() -> Args:
     """Return command-line arguments."""
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument(
         "--limit",
@@ -134,12 +132,8 @@ def get_args() -> Args:
     headless: bool = bool(env_headless) if env_headless else args.headless
     chromium_path: str = args.chromium_path
     chromedriver_path: str = args.driver_path
-    timeout_seconds: int = (
-        int(env_timeout_seconds) if env_timeout_seconds else args.timeout
-    )
-    recrawl_hours: float = (
-        float(env_recrawl_hours) if env_recrawl_hours else args.recrawl_hours
-    )
+    timeout_seconds: int = int(env_timeout_seconds) if env_timeout_seconds else args.timeout
+    recrawl_hours: float = float(env_recrawl_hours) if env_recrawl_hours else args.recrawl_hours
     wait_seconds: int = int(env_wait_seconds) if env_wait_seconds else args.wait_seconds
 
     return Args(
@@ -158,9 +152,7 @@ def main():
     """Run the scraper."""
     signal.signal(signal.SIGTERM, handle_sigterm_interrupt)
 
-    logging.basicConfig(
-        format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO
-    )
+    logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO)
     args = get_args()
     logging.info(args)
 
@@ -255,9 +247,7 @@ def main():
                 if len(listings) > 0:
                     # concatenate the category's listings into the main dataframe
                     category_df = pd.DataFrame(listings)
-                    listings_df = pd.concat(
-                        [listings_df, category_df], ignore_index=True
-                    )
+                    listings_df = pd.concat([listings_df, category_df], ignore_index=True)
 
         mp_scraper.close()
     except Exception as exc:
