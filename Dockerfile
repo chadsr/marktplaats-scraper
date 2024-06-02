@@ -27,18 +27,18 @@ RUN addgroup -g ${MP_GID} -S ${MP_GROUP} && adduser -u ${MP_UID} -S ${MP_USER} -
 
 RUN mkdir /app && chown -R ${MP_USER}:${MP_GROUP} /app
 
-RUN cp /usr/bin/chromedriver /app && chown ${MP_USER}:${MP_GROUP} /app/chromedriver && chmod +rx /app/chromedriver
-
 RUN mkdir /data && chown -R ${MP_USER}:${MP_GROUP} /data
 VOLUME [ "/data" ]
 
 USER ${MP_USER}
 WORKDIR /app
 
-COPY --chown=${MP_USER}:${MP_GROUP} ./marktplaats-scraper ./marktplaats-scraper
+COPY --chown=${MP_USER}:${MP_GROUP} ./mpscraper ./mpscraper
 COPY --chown=${MP_USER}:${MP_GROUP} ./pyproject.toml ./pyproject.toml
 COPY --chown=${MP_USER}:${MP_GROUP} ./poetry.lock ./poetry.lock
+COPY --chown=${MP_USER}:${MP_GROUP} ./README.md ./README.md
+COPY --chown=${MP_USER}:${MP_GROUP} ./LICENSE ./LICENSE
 
-RUN poetry install -vvv --without=dev
+RUN poetry install --compile --without=dev
 
-CMD [ "poetry", "run", "python", "./marktplaats-scraper", "--chromium-path", "/usr/bin/chromium-browser", "--driver-path", "/app/chromedriver", "--data-dir", "/data" ]
+CMD [ "poetry", "run", "python", "-m", "mpscraper", "--chromium-path", "/usr/bin/chromium-browser", "--driver-path", "/usr/bin/chromedriver", "--data-dir", "/data" ]
