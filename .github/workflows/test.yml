@@ -77,7 +77,7 @@ jobs:
       - name: Run Pytest
         run: |
           source .venv/bin/activate
-          pytest -vv --cov=./ --cov-report=xml ./
+          pytest -vv --cov=./mpscraper --cov-report=xml ./tests
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
