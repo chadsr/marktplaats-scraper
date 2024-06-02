@@ -18,7 +18,8 @@ from .utils import (
 )
 from .display import has_display, get_virtual_display
 from .exceptions import NotFoundError, ListingsError, ListingsInterrupt
-from .mpscraper import MpScraper, Listing
+from .mpscraper import MpScraper
+from .listing import Listing
 
 ENV_PREFIX = "MP_"
 ENV_LIMIT = f"{ENV_PREFIX}LIMIT"
