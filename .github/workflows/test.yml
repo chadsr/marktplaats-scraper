@@ -51,8 +51,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y chromium-browser xvfb
-          echo "CHROMIUM_PATH=$(which chromium)" >> "$GITHUB_ENV" && echo env.CHROMIUM_PATH
-          echo "CHROMIUM_VERSION=$(chromium --version)" >> "$GITHUB_ENV" && echo env.CHROMIUM_VERSION
+          echo "CHROMIUM_PATH=$(which chromium)" >> "$GITHUB_ENV" && echo ${{ env.CHROMIUM_PATH }}
+          echo "CHROMIUM_VERSION=$(chromium --version)" >> "$GITHUB_ENV" && echo ${{ env.CHROMIUM_VERSION }}
       - name: Load cached Chromedriver
         id: cached-chromedriver
         uses: actions/cache@v4
