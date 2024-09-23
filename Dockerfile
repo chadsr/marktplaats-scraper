@@ -14,12 +14,7 @@ ENV PYTHONUNBUFFERED=1
 
 # install chromium & deps
 RUN apk update
-RUN apk add --no-cache --update chromium chromium-chromedriver xvfb gcc musl-dev libffi-dev linux-headers g++ build-base python3-dev
-
-# upgrade pip
-RUN pip install --no-cache-dir --upgrade pip
-
-RUN pip install --no-cache-dir poetry
+RUN apk add --no-cache --update chromium chromium-chromedriver xvfb gcc musl-dev libffi-dev linux-headers g++ build-base python3-dev poetry
 
 RUN addgroup -g ${MP_GID} -S ${MP_GROUP} && adduser -u ${MP_UID} -S ${MP_USER} -G ${MP_GROUP}
 
