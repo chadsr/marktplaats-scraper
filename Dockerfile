@@ -1,16 +1,14 @@
-ARG PYTHON_MAJOR_MINOR_VERSION="3.12"
 
-FROM python:${PYTHON_MAJOR_MINOR_VERSION}-alpine
+FROM docker.io/python:3.12-alpine
 
-LABEL org.opencontainers.image.title="marktplaats-scraper" \
-    org.opencontainers.image.description="Scrape listings from Marktplaats and save to CSV file." \
-    org.opencontainers.image.source="https://github.com/chadsr/marktplaats-scraper"
-
-ARG PYTHON_MAJOR_MINOR_VERSION
 ARG MP_USER="mp"
 ARG MP_GROUP="mp"
 ARG MP_UID="1000"
 ARG MP_GID="1001"
+
+LABEL org.opencontainers.image.title="marktplaats-scraper" \
+    org.opencontainers.image.description="Scrape listings from Marktplaats and save to CSV file." \
+    org.opencontainers.image.source="https://github.com/chadsr/marktplaats-scraper"
 
 ENV PYTHONUNBUFFERED=1
 

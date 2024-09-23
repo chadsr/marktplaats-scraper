@@ -2,6 +2,8 @@ name: Docker Image CI
 on:
   release:
     types: [published]
+permissions:
+  packages: write
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -39,7 +41,7 @@ jobs:
             type=gha
           cache-to: |
             type=gha,mode=max
-          platforms: linux/amd64, linux/arm64, windows/amd64
+          platforms: linux/amd64, linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           context: .
           file: Dockerfile
