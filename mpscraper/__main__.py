@@ -17,7 +17,12 @@ from .utils import (
     get_utc_now,
 )
 from .display import has_display, get_virtual_display
-from .exceptions import NotFoundError, ListingsError, ListingsInterrupt
+from .exceptions import (
+    CategoriesError,
+    NotFoundError,
+    ListingsError,
+    ListingsInterrupt,
+)
 from .mpscraper import MpScraper
 from .listing import Listing
 
@@ -209,6 +214,8 @@ def main():
     )
 
     parent_categories = mp_scraper.get_parent_categories()
+    if len(parent_categories) == 0:
+        raise CategoriesError("No parent categories found")
 
     try:
         remaining_limit = args.limit
@@ -233,8 +240,8 @@ def main():
                     remaining_limit = remaining_limit - listings_count
                     pbar.update(listings_count)
 
-                    if remaining_limit == 0:
-                        break
+                    if remaining_limit < 1:
+                        stop = True
                 except ListingsInterrupt as exc:
                     logging.info("Stopping gracefully...")
                     listings = exc.listings

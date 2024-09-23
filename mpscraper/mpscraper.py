@@ -26,7 +26,7 @@ from .exceptions import (
 from .listing import Listing, ListingDetails
 
 
-MARTKPLAATS_BASE_URL = "https://www.marktplaats.nl"
+MARTKPLAATS_BASE_URL = "https://marktplaats.nl"
 REQUEST_OPTS = "#sortBy:SORT_INDEX|sortOrder:DECREASING"
 
 CONTENT_ID = "content"
@@ -100,7 +100,31 @@ class MpScraper:
         return f"{category_url}p/{page_number}/{REQUEST_OPTS}"
 
     def get_parent_categories(self) -> set[Category]:
-        parent_categories = set()
+        parent_categories: set[Category] = set()
+
+        self.__driver.get(self.__base_url)
+        soup = self.__driver.get_soup()
+        category_li_elem_name = "li"
+        category_li_elem_attrs = {"class": "CategoriesBlock-listItem"}
+        category_li_elems = soup.findAll(category_li_elem_name, attrs=category_li_elem_attrs)
+
+        for category_li_elem in category_li_elems:
+            if not isinstance(category_li_elem, Tag):
+                raise ElementNotFound(tag_name=category_li_elem_name, attrs=category_li_elem_attrs)
+
+            category_a_elem_name = "a"
+            category_a_elem_attrs = {"class": "hz-Link--navigation"}
+            category_a_elem = category_li_elem.find(
+                name=category_a_elem_name, attrs=category_a_elem_attrs
+            )
+            if not isinstance(category_a_elem, Tag):
+                raise ElementNotFound(tag_name=category_a_elem_name, attrs=category_a_elem_attrs)
+
+            href_split = category_a_elem.attrs["href"].split("/")
+            category_id = int(href_split[2])
+            category_url = f"{self.__base_url}/l/{href_split[3]}"
+            category = Category(id=category_id, url=category_url)
+            parent_categories.add(category)
 
         return parent_categories
 
@@ -279,7 +303,7 @@ class MpScraper:
         """Return a list of Marktplaats listings for the given category, up to limit in quantity, and excluding item_ids from existing_item_ids."""
         listings: list[Listing] = []
         item_ids: set[str] = existing_item_ids.copy() if existing_item_ids is not None else set()
-        parent_category_slug = parent_category.url.split("/")[-2]
+        parent_category_slug = parent_category.url.split("/")[-1]
 
         listings_count = self.listings_count(parent_category)
         if limit > listings_count or limit == 0:
