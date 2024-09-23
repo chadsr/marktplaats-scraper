@@ -1,5 +1,6 @@
 .vscode/
 .ruff_cache/
+listings.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
