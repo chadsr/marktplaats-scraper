@@ -33,6 +33,13 @@ class MPError(Exception):
         return f"Marktplaats error: {self.msg}"
 
 
+class CategoriesError(MPError):
+    """CategoriesError is raised when no valid categories are found to crawl."""
+
+    def __str__(self):
+        return f"Categories error: {self.msg}"
+
+
 class ForbiddenError(MPError):
     """ForbiddenError is raised when Marktplaats rate-limiting/blocking has been encountered."""
 
