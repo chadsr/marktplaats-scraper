@@ -79,7 +79,7 @@ jobs:
           source .venv/bin/activate
           pytest -vv --cov=./mpscraper --cov-report=xml ./tests
       - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
   security:
