@@ -9,7 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 beautifulsoup4 = "^4.12.3"
-selenium = "^4.27.1"
+selenium = "^4.28.1"
 PyVirtualDisplay = "^3.0"
 tqdm = "^4.67.1"
 pandas = "^2.2.3"
