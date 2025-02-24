@@ -12,9 +12,10 @@ from selenium.common.exceptions import (
     WebDriverException,
 )
 from selenium.webdriver.common.by import By
+from datetime import datetime
 
 from .driver import MPDriver
-from .utils import get_utc_now, format_text
+from .utils import get_utc_iso_now, format_text
 from .exceptions import (
     ElementNotFound,
     ListingsError,
@@ -283,7 +284,7 @@ class MpScraper:
         stats = data[LISTING_KEY][STATS_KEY]
         view_count = int(stats[VIEW_COUNT_KEY])
         favorited_count = int(stats[FAVORITED_KEY])
-        listed_timestamp = stats[LISTED_TIMESTAMP_KEY]
+        listed_timestamp = datetime.fromisoformat(stats[LISTED_TIMESTAMP_KEY]).isoformat()
 
         return ListingDetails(
             ad_type=ad_type,
@@ -464,7 +465,7 @@ class MpScraper:
                             if SELLER_INFO_KEY in res_listing:
                                 seller_id = res_listing[SELLER_INFO_KEY][SELLER_ID_KEY]
 
-                            crawled_timestamp = get_utc_now()
+                            crawled_timestamp = get_utc_iso_now()
 
                             listing = Listing(
                                 item_id=item_id,

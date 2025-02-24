@@ -13,9 +13,14 @@ def read_csv(file_path: str) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def get_utc_now() -> str:
-    """Return the ISO 8601 UTC timestamp string."""
-    return datetime.now(tz=timezone.utc).isoformat() + "Z"
+def get_utc_now() -> datetime:
+    """Return the current time in UTC timezone"""
+    return datetime.now(tz=timezone.utc)
+
+
+def get_utc_iso_now() -> str:
+    """Return the ISO 8601 UTC timestamp string for now()."""
+    return get_utc_now().isoformat()
 
 
 def diff_hours(first: datetime, last: datetime) -> float:

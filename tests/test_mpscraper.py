@@ -3,7 +3,7 @@ from typing import Iterable
 import pytest
 from selenium.webdriver.chrome.webdriver import WebDriver
 from pyvirtualdisplay.display import Display
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from mpscraper.mpscraper import (
     MARKTPLAATS_ADVERTISEMENT_PREFIX,
@@ -14,7 +14,7 @@ from mpscraper.mpscraper import (
 )
 from mpscraper.listing import Listing
 
-from mpscraper.utils import diff_hours
+from mpscraper.utils import diff_hours, get_utc_now
 from mpscraper.display import has_display, get_virtual_display
 from mpscraper.driver import MPDriver
 
@@ -132,7 +132,7 @@ class TestMpScraper:
 
     def test_diff_hours(self):
         hours_offsets = [0.5, 1.0, 2.5, 3.99, 4.33, 5.00]
-        datetime_now = datetime.now()
+        datetime_now = get_utc_now()
 
         for hours_offset in hours_offsets:
             datetime_offset = datetime_now - timedelta(hours=hours_offset)

@@ -6,7 +6,7 @@ from typing import NamedTuple
 import pandas as pd
 from pyvirtualdisplay.display import Display
 from tqdm import tqdm
-from dateutil.parser import parse as parse_datetime
+from datetime import datetime
 
 from .utils import (
     diff_hours,
@@ -190,11 +190,11 @@ def main():
             save_listings(listings_df=listings_df, file_path=listings_file_path)
 
         # recrawl listings with >= recrawl_hours since last crawl
-        now_datetime = parse_datetime(get_utc_now())
+        now_datetime = get_utc_now()
         for _, listing in listings_df.iterrows():
             item_id: str = str(listing["item_id"])
             crawled_timestamp: str = str(listing["crawled_timestamp"])
-            crawled_datetime = parse_datetime(crawled_timestamp)
+            crawled_datetime = datetime.fromisoformat(crawled_timestamp)
             diff_hours_now = diff_hours(crawled_datetime, now_datetime)
             if diff_hours_now >= args.recrawl_hours:
                 item_ids.remove(item_id)
