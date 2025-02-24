@@ -340,38 +340,8 @@ class MpScraper:
                         url_with_opts = self.__get_url_with_options(category_url, current_page)
                         self.__driver.get(url_with_opts)
 
-                        page_select_elem_present = EC.presence_of_element_located(
-                            (By.ID, SELECT_ELEM_ID)
-                        )
-                        WebDriverWait(self.__driver, self.__timeout_seconds).until(
-                            page_select_elem_present
-                        )
-
                         # Attempt to parse the page
                         page = self.__driver.get_soup()
-                        page_select_elem_name = "select"
-                        page_select_elem_attrs = {"id": SELECT_ELEM_ID}
-                        page_select_elem = page.find(
-                            name=page_select_elem_name, attrs=page_select_elem_attrs
-                        )
-                        if not isinstance(page_select_elem, Tag):
-                            raise ElementNotFound(
-                                tag_name=page_select_elem_name,
-                                attrs=page_select_elem_attrs,
-                            )
-
-                        # Get the selected category option element
-                        page_option_selected_name = "option"
-                        page_option_selected_attrs = {"selected": ""}
-                        page_option_selected = page_select_elem.find(
-                            name=page_option_selected_name,
-                            attrs=page_option_selected_attrs,
-                        )
-                        if not isinstance(page_option_selected, Tag):
-                            raise ElementNotFound(
-                                tag_name=page_option_selected_name,
-                                attrs=page_option_selected_attrs,
-                            )
 
                         # Get the next.js props JSON object
                         page_data_script_name = "script"
