@@ -1,4 +1,6 @@
 name: Python Tests
+permissions:
+  contents: read
 on:
   pull_request:
     paths:
@@ -32,6 +34,9 @@ jobs:
         env:
           RUFF_OUTPUT_FORMAT: github
   test:
+    permissions:
+      contents: read
+      pull-requests: write
     strategy:
       fail-fast: true
       matrix:
