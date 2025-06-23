@@ -1,4 +1,6 @@
 name: Python Tests
+permissions:
+  contents: read
 on:
   pull_request:
     paths:
@@ -22,6 +24,8 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Install Python 3
@@ -32,6 +36,8 @@ jobs:
         env:
           RUFF_OUTPUT_FORMAT: github
   test:
+    permissions:
+      contents: read
     strategy:
       fail-fast: true
       matrix:
@@ -84,6 +90,8 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
   security:
     runs-on: "ubuntu-latest"
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Install Python 3
