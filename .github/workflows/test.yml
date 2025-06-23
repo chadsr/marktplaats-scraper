@@ -22,6 +22,8 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Install Python 3
@@ -34,6 +36,9 @@ jobs:
   test:
     strategy:
       fail-fast: true
+    permissions:
+      contents: read
+      actions: write
       matrix:
         os: ["ubuntu-latest"]
         python-version: ["3.12"]
@@ -84,6 +89,8 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
   security:
     runs-on: "ubuntu-latest"
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: Install Python 3
