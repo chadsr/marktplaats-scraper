@@ -19,7 +19,7 @@ lxml = "^6.0.0"
 ruff = "^0.12.2"
 pytest = "^8.4.1"
 pytest-cov = "^6.2.1"
-bandit = "^1.8.5"
+bandit = "^1.8.6"
 pre-commit = "^4.2.0"
 
 [tool.ruff]
