@@ -12,7 +12,7 @@ beautifulsoup4 = "^4.13.4"
 selenium = "^4.34.0"
 PyVirtualDisplay = "^3.0"
 tqdm = "^4.67.1"
-pandas = "^2.3.0"
+pandas = "^2.3.1"
 lxml = "^6.0.0"
 
 [tool.poetry.group.dev.dependencies]
