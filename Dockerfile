@@ -1,5 +1,5 @@
 
-FROM docker.io/python:3.12-alpine
+FROM docker.io/python:3.13-alpine
 
 ARG MP_USER="mp"
 ARG MP_GROUP="mp"
