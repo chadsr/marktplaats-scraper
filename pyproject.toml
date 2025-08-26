@@ -16,7 +16,7 @@ pandas = "^2.3.2"
 lxml = "^6.0.0"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.12.9"
+ruff = "^0.12.10"
 pytest = "^8.4.1"
 pytest-cov = "^6.2.1"
 bandit = "^1.8.6"
