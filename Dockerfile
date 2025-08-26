@@ -4,7 +4,7 @@ FROM docker.io/python:3.13-alpine
 ARG MP_USER="mp"
 ARG MP_GROUP="mp"
 ARG MP_UID="1000"
-ARG MP_GID="1001"
+ARG MP_GID="1000"
 
 LABEL org.opencontainers.image.title="marktplaats-scraper" \
     org.opencontainers.image.description="Scrape listings from Marktplaats and save to CSV file." \
