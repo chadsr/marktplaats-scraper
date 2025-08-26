@@ -48,3 +48,7 @@ docker run -it -v ${PWD}/data:/data ghcr.io/chadsr/marktplaats-scraper:latest
 poetry install
 poetry run mpscraper -d data/
 ```
+
+## Examples
+
+1. [**Category Classification Model**](./examples/category_classification/) - Predicts the appropriate Marktplaats category for a given listing title text.
