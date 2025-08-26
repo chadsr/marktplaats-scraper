@@ -6,6 +6,9 @@ authors = ["Ross <git@ross.ch>"]
 license = "MIT"
 readme = "README.md"
 
+[tool.poetry.scripts]
+mpscraper = "mpscraper.__main__:main"
+
 [tool.poetry.dependencies]
 python = "^3.13"
 beautifulsoup4 = "^4.13.5"
