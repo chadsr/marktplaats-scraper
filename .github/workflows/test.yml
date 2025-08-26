@@ -19,11 +19,11 @@ on:
       - "pyproject.toml"
       - ".github/workflows/test.yml"
 env:
-  PYTHON_VERSION: "3.12"
+  PYTHON_VERSION: 3.13
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: 'ubuntu-latest'
     permissions:
       contents: read
     steps:
@@ -36,14 +36,9 @@ jobs:
         env:
           RUFF_OUTPUT_FORMAT: github
   test:
+    runs-on: 'ubuntu-latest'
     permissions:
       contents: read
-    strategy:
-      fail-fast: true
-      matrix:
-        os: ["ubuntu-latest"]
-        python-version: ["3.12"]
-    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
@@ -89,7 +84,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
   security:
-    runs-on: "ubuntu-latest"
+    runs-on: 'ubuntu-latest'
     permissions:
       contents: read
     steps:
