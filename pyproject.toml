@@ -13,7 +13,7 @@ selenium = "^4.35.0"
 PyVirtualDisplay = "^3.0"
 tqdm = "^4.67.1"
 pandas = "^2.3.2"
-lxml = "^6.0.0"
+lxml = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.12.10"
