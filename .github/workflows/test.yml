@@ -19,17 +19,11 @@ on:
       - "pyproject.toml"
       - ".github/workflows/test.yml"
 env:
-  OS_MATRIX: '["ubuntu-latest"]'
-  PYTHON_VERSION_MATRIX: '[3.13]'
+  PYTHON_VERSION: 3.13
 jobs:
   lint:
     name: Lint
-    strategy:
-      fail-fast: true
-      matrix:
-        os: ${{ fromJSON(env.OS_MATRIX) }}
-        python-version: ${{ fromJSON(env.PYTHON_VERSION_MATRIX) }}
-    runs-on: ${{ matrix.os }}
+    runs-on: 'ubuntu-latest'
     permissions:
       contents: read
     steps:
@@ -37,17 +31,12 @@ jobs:
       - name: Install Python 3
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.PYTHON_VERSION }}
       - uses: pre-commit/action@v3.0.1
         env:
           RUFF_OUTPUT_FORMAT: github
   test:
-    strategy:
-      fail-fast: true
-      matrix:
-        os: ${{ fromJSON(env.OS_MATRIX) }}
-        python-version: ${{ fromJSON(env.PYTHON_VERSION_MATRIX) }}
-    runs-on: ${{ matrix.os }}
+    runs-on: 'ubuntu-latest'
     permissions:
       contents: read
     timeout-minutes: 10
@@ -56,7 +45,7 @@ jobs:
       - name: Install Python 3
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.PYTHON_VERSION }}
       - name: Install xvfb & chromium-browser
         run: |
           sudo apt-get update
@@ -95,12 +84,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
   security:
-    strategy:
-      fail-fast: true
-      matrix:
-        os: ${{ fromJSON(env.OS_MATRIX) }}
-        python-version: ${{ fromJSON(env.PYTHON_VERSION_MATRIX) }}
-    runs-on: ${{ matrix.os }}
+    runs-on: 'ubuntu-latest'
     permissions:
       contents: read
     steps:
@@ -108,7 +92,7 @@ jobs:
       - name: Install Python 3
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.PYTHON_VERSION }}
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
