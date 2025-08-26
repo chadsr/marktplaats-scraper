@@ -52,3 +52,4 @@ poetry run mpscraper -d data/
 ## Examples
 
 1. [**Category Classification Model**](./examples/category_classification/) - Predicts the appropriate Marktplaats category for a given listing title text.
+2. [**Category Statistics**](./examples/category_statistics/) - Calculates some basic data-science/statistics tasks for a given category, ranking views/popularity of listing types.
