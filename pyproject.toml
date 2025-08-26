@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "mpscraper"
-version = "0.1.0"
+version = "0.2.1"
 description = "Marktplaats.nl (Dutch Classifieds) Listing Scraper"
 authors = ["Ross <git@ross.ch>"]
 license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.13"
 beautifulsoup4 = "^4.13.5"
 selenium = "^4.35.0"
 PyVirtualDisplay = "^3.0"
