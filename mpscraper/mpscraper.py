@@ -137,7 +137,7 @@ class MpScraper:
 
         try:
             categories_present = EC.presence_of_element_located((By.ID, str(parent_category.id)))
-            WebDriverWait(self.__driver, self.__timeout_seconds).until(categories_present)
+            _ = WebDriverWait(self.__driver, self.__timeout_seconds).until(categories_present)
         except TimeoutException:
             return subcategories
 
@@ -205,7 +205,7 @@ class MpScraper:
         self.__driver.get(category.url)
 
         page_content_present = EC.presence_of_element_located((By.ID, CONTENT_ID))
-        WebDriverWait(self.__driver, self.__timeout_seconds).until(page_content_present)
+        _ = WebDriverWait(self.__driver, self.__timeout_seconds).until(page_content_present)
 
         soup = self.__driver.get_soup()
 
@@ -213,15 +213,27 @@ class MpScraper:
         label_altijd_attrs = {"for": "offeredSince-Altijd"}
         label_altijd = soup.find(name=label_altijd_name, attrs=label_altijd_attrs)
         if isinstance(label_altijd, Tag):
-            altijd_counter_name = "span"
-            altijd_counter_attrs = {"class": "hz-Text"}
-            altijd_counter = label_altijd.find(name=altijd_counter_name, attrs=altijd_counter_attrs)
-            if isinstance(altijd_counter, Tag):
-                count_text = altijd_counter.get_text(strip=True)
-                count_text = re.sub("[.,()]", "", count_text)
-                return int(count_text)
+            span_altijd_counter_name = "span"
+            span_altijd_counter_attrs = {"class": "hz-SelectionInput-Counter"}
+            span_altijd_counter = label_altijd.find(
+                name=span_altijd_counter_name, attrs=span_altijd_counter_attrs
+            )
+            if isinstance(span_altijd_counter, Tag):
+                altijd_counter_name = "span"
+                altijd_counter_attrs = {"class": "hz-Text"}
+                altijd_counter = span_altijd_counter.find(
+                    name=altijd_counter_name, attrs=altijd_counter_attrs
+                )
+                if isinstance(altijd_counter, Tag):
+                    count_text = altijd_counter.get_text(strip=True)
+                    count_text = re.sub("[.,()]", "", count_text)
+                    return int(count_text)
+                else:
+                    raise ElementNotFound(tag_name=altijd_counter_name, attrs=altijd_counter_attrs)
             else:
-                raise ElementNotFound(tag_name=altijd_counter_name, attrs=altijd_counter_attrs)
+                raise ElementNotFound(
+                    tag_name=span_altijd_counter_name, attrs=span_altijd_counter_attrs
+                )
         else:
             raise ElementNotFound(tag_name=label_altijd_name, attrs=label_altijd_attrs)
 
@@ -231,7 +243,7 @@ class MpScraper:
 
         try:
             listing_present = EC.presence_of_element_located((By.ID, LISTING_ROOT_ID))
-            WebDriverWait(self.__driver, self.__timeout_seconds).until(listing_present)
+            _ = WebDriverWait(self.__driver, self.__timeout_seconds).until(listing_present)
         except TimeoutException:
             # pass since we catch errors next
             pass
