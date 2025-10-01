@@ -1,5 +1,5 @@
 import os
-from typing import Iterable
+from collections.abc import Iterable
 import pytest
 from selenium.webdriver.chrome.webdriver import WebDriver
 from pyvirtualdisplay.display import Display
@@ -10,11 +10,10 @@ from mpscraper.mpscraper import (
     MARTKPLAATS_BASE_URL,
     Category,
     MpScraper,
-    format_text,
 )
 from mpscraper.listing import Listing
 
-from mpscraper.utils import diff_hours, get_utc_now
+from mpscraper.utils import diff_hours, get_utc_now, format_text
 from mpscraper.display import has_display, get_virtual_display
 from mpscraper.driver import MPDriver
 
@@ -84,13 +83,16 @@ def mp_scraper() -> Iterable[MpScraper]:
 
 
 class TestMpScraper:
-    def test_get_listings_limit(self, mp_scraper: MpScraper, display: Display):
+    def test_get_listings_limit(self, mp_scraper: MpScraper, display: Display | None):
         """
         Assert that get_listings returns exactly the limit quantity and all are unique
         """
+        if display and not display.is_alive():
+            _ = display.start()
+
         limits = [LIMIT_SMALL, LIMIT_LARGE]
         for limit in limits:
-            item_ids = set()
+            item_ids: set[str] = set()
 
             listings = mp_scraper.get_listings(parent_category=TEST_CATEGORY, limit=limit)
             assert len(listings) == limit
@@ -101,10 +103,13 @@ class TestMpScraper:
                 assert listing.item_id not in item_ids
                 item_ids.add(listing.item_id)
 
-    def test_get_listings_existing_item_ids(self, mp_scraper: MpScraper, display: Display):
+    def test_get_listings_existing_item_ids(self, mp_scraper: MpScraper, display: Display | None):
         """
         Assert that item_ids passed to existing_item_ids are excluded from the results
         """
+        if display and not display.is_alive():
+            _ = display.start()
+
         listings_initial = mp_scraper.get_listings(parent_category=TEST_CATEGORY, limit=LIMIT_SMALL)
         assert len(listings_initial) == LIMIT_SMALL
         item_ids_initial = set([listing.item_id for listing in listings_initial])
