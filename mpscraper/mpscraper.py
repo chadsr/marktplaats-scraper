@@ -251,10 +251,7 @@ class MpScraper:
         page = self.__driver.get_soup()
 
         description_div_name = "div"
-        description_div_attrs = {
-            "class": "Description-description",
-            "data-collapsable": "description",
-        }
+        description_div_attrs = {"class": "Description-description"}
         description_div = page.find(name=description_div_name, attrs=description_div_attrs)
         if not isinstance(description_div, Tag):
             raise ElementNotFound(tag_name=description_div_name, attrs=description_div_attrs)
