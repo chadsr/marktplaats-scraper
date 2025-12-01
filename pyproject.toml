@@ -23,7 +23,7 @@ ruff = "^0.14.3"
 pytest = "^8.4.2"
 pytest-cov = "^7.0.0"
 bandit = "^1.8.6"
-pre-commit = "^4.3.0"
+pre-commit = "^4.5.0"
 
 [tool.ruff]
 line-length = 100
