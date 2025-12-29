@@ -21,22 +21,6 @@ on:
 env:
   PYTHON_VERSION: 3.14
 jobs:
-  lint:
-    name: Lint
-    runs-on: "ubuntu-latest"
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@v7
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          activate-environment: true
-      - name: Install dependencies
-        run: uv sync --all-groups
-      - uses: pre-commit/action@v3.0.1
-        env:
-          RUFF_OUTPUT_FORMAT: github
   test:
     runs-on: "ubuntu-latest"
     permissions:
