@@ -1,31 +1,28 @@
-import json
-from time import sleep
-import re
-import logging
-from typing import NamedTuple
-from tqdm import tqdm
-from bs4 import Tag
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import (
-    TimeoutException,
-    WebDriverException,
-)
-from selenium.webdriver.common.by import By
 from datetime import datetime
+import json
+import logging
+import re
+from time import sleep
+from typing import NamedTuple
+
+from bs4 import Tag
+from selenium.common.exceptions import TimeoutException, WebDriverException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
+from tqdm import tqdm
 
 from .driver import MPDriver
-from .utils import get_utc_iso_now, format_text
 from .exceptions import (
     ElementNotFound,
+    ForbiddenError,
     ListingsError,
     ListingsInterrupt,
     MPError,
-    ForbiddenError,
     UnexpectedCategoryId,
 )
 from .listing import Listing, ListingDetails
-
+from .utils import format_text, get_utc_iso_now
 
 MARTKPLAATS_BASE_URL = "https://marktplaats.nl"
 REQUEST_OPTS = "#sortBy:SORT_INDEX|sortOrder:DECREASING"

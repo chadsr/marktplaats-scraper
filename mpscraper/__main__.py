@@ -1,30 +1,26 @@
-import os
-import logging
-import signal
 import argparse
+from datetime import datetime
+import logging
+import os
+import signal
 from typing import NamedTuple
+
 import pandas as pd
 from pyvirtualdisplay.display import Display
 from tqdm import tqdm
-from datetime import datetime
 
+from .display import get_virtual_display, has_display
+from .exceptions import CategoriesError, ListingsError, ListingsInterrupt, NotFoundError
+from .listing import Listing
+from .mpscraper import MpScraper
 from .utils import (
     diff_hours,
+    get_utc_now,
     handle_sigterm_interrupt,
     read_csv,
     remove_duplicate_listings,
     save_listings,
-    get_utc_now,
 )
-from .display import has_display, get_virtual_display
-from .exceptions import (
-    CategoriesError,
-    NotFoundError,
-    ListingsError,
-    ListingsInterrupt,
-)
-from .mpscraper import MpScraper
-from .listing import Listing
 
 ENV_PREFIX = "MP_"
 ENV_LIMIT = f"{ENV_PREFIX}LIMIT"
@@ -185,7 +181,7 @@ def main():
                     has_duplicates = True
 
         if has_duplicates:
-            logging.info(("Removing duplicate existing listings..."))
+            logging.info("Removing duplicate existing listings...")
             listings_df = remove_duplicate_listings(listings_df)
             save_listings(listings_df=listings_df, file_path=listings_file_path)
 
