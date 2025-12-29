@@ -20,7 +20,7 @@ lxml = "^6.0.2"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.14.10"
-pytest = "^8.4.2"
+pytest = "^9.0.2"
 pytest-cov = "^7.0.0"
 bandit = "^1.8.6"
 pre-commit = "^4.5.0"
