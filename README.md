@@ -42,11 +42,11 @@ mkdir data/ && chown -R 1000:1000 data/
 docker run -it -v ${PWD}/data:/data ghcr.io/chadsr/marktplaats-scraper:latest
 ```
 
-### Poetry
+### UV
 
 ```shell
-poetry install
-poetry run mpscraper -d data/
+uv sync
+uv run mpscraper -d data/
 ```
 
 ## Examples
