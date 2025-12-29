@@ -1,4 +1,5 @@
 import os
+
 from pyvirtualdisplay.display import Display
 
 

@@ -6,7 +6,7 @@ on:
     paths:
       - "mpscraper/**"
       - "tests/**"
-      - "poetry.lock"
+      - "uv.lock"
       - "pyproject.toml"
       - ".github/workflows/test.yml"
   push:
@@ -15,37 +15,25 @@ on:
     paths:
       - "mpscraper/**"
       - "tests/**"
-      - "poetry.lock"
+      - "uv.lock"
       - "pyproject.toml"
       - ".github/workflows/test.yml"
 env:
-  PYTHON_VERSION: 3.13
+  PYTHON_VERSION: 3.14
 jobs:
-  lint:
-    name: Lint
-    runs-on: 'ubuntu-latest'
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-      - name: Install Python 3
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - uses: pre-commit/action@v3.0.1
-        env:
-          RUFF_OUTPUT_FORMAT: github
   test:
-    runs-on: 'ubuntu-latest'
+    runs-on: "ubuntu-latest"
     permissions:
       contents: read
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-      - name: Install Python 3
-        uses: actions/setup-python@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          activate-environment: true
+      - name: Install dependencies
+        run: uv sync --all-groups
       - name: Install xvfb & chromium-browser
         run: |
           sudo apt-get update
@@ -61,53 +49,24 @@ jobs:
           export DISPLAY=:99
           chromedriver --url-base=/wd/hub &
           sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
       - name: Run Pytest
         run: |
-          source .venv/bin/activate
           pytest -vv --cov=./mpscraper --cov-report=xml ./tests
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
   security:
-    runs-on: 'ubuntu-latest'
+    runs-on: "ubuntu-latest"
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v6
-      - name: Install Python 3
-        uses: actions/setup-python@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          activate-environment: true
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
+        run: uv sync --all-groups
       - name: Run Bandit
-        run: |-
-          source .venv/bin/activate
-          bandit -r ./mpscraper
+        run: uv run bandit -r ./mpscraper

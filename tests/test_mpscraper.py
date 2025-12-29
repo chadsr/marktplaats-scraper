@@ -1,21 +1,21 @@
-import os
 from collections.abc import Iterable
-import pytest
-from selenium.webdriver.chrome.webdriver import WebDriver
-from pyvirtualdisplay.display import Display
 from datetime import timedelta
+import os
 
+import pytest
+from pyvirtualdisplay.display import Display
+from selenium.webdriver.chrome.webdriver import WebDriver
+
+from mpscraper.display import get_virtual_display, has_display
+from mpscraper.driver import MPDriver
+from mpscraper.listing import Listing
 from mpscraper.mpscraper import (
     MARKTPLAATS_ADVERTISEMENT_PREFIX,
     MARTKPLAATS_BASE_URL,
     Category,
     MpScraper,
 )
-from mpscraper.listing import Listing
-
-from mpscraper.utils import diff_hours, get_utc_now, format_text
-from mpscraper.display import has_display, get_virtual_display
-from mpscraper.driver import MPDriver
+from mpscraper.utils import diff_hours, format_text, get_utc_now
 
 TEST_RUN_HEADLESS = False
 CHROMIUM_PATH = os.getenv("CHROMIUM_PATH")

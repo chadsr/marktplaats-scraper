@@ -1,17 +1,14 @@
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver import ChromeOptions, ChromeService
-from selenium.webdriver.chrome.webdriver import WebDriver
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import (
-    StaleElementReferenceException,
-    WebDriverException,
-)
 from bs4 import BeautifulSoup as Soup
 from bs4 import Tag
+from selenium.common.exceptions import StaleElementReferenceException, WebDriverException
+from selenium.webdriver import ChromeOptions, ChromeService
+from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 
-from .exceptions import ElementNotFound, MPError, ForbiddenError
+from .exceptions import ElementNotFound, ForbiddenError, MPError
 
 MODAL_ID = "notice"
 BTN_COOKIES_ACCEPT_ARIA_LABEL = "[aria-label=Accepteren]"

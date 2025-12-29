@@ -1,6 +1,7 @@
-import pandas as pd
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
+import pandas as pd
 
 from .exceptions import EmptyDataFrameError
 
@@ -15,7 +16,7 @@ def read_csv(file_path: str) -> pd.DataFrame:
 
 def get_utc_now() -> datetime:
     """Return the current time in UTC timezone"""
-    return datetime.now(tz=timezone.utc)
+    return datetime.now(tz=UTC)
 
 
 def get_utc_iso_now() -> str:
