@@ -38,7 +38,6 @@ jobs:
         uses: browser-actions/setup-chrome@v2
         with:
           install-dependencies: true
-          install-chromedriver: true
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
         with:
@@ -48,7 +47,6 @@ jobs:
       - name: Run Pytest
         env:
           CHROMIUM_PATH: ${{ steps.setup-chrome.outputs.chromium-path }}
-          CHROMEDRIVER_PATH: ${{ steps.setup-chrome.outputs.chromedriver-path }}
         run: |
           pytest ./tests
       - name: Upload Coverage to Codecov
