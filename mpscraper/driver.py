@@ -11,7 +11,7 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
-from .exceptions import ElementNotFound, ForbiddenError, MPError
+from .exceptions import ElementNotFoundError, ForbiddenError, MPError
 
 if TYPE_CHECKING:
     from selenium.webdriver.remote.webelement import WebElement
@@ -72,7 +72,7 @@ class MPDriver(WebDriver):
             err_msg = err_msgs[0]
 
             if not isinstance(err_msg, Tag):
-                raise ElementNotFound(tag_name="p", attrs={"class": "mp-Alert--error"})
+                raise ElementNotFoundError(tag_name="p", attrs={"class": "mp-Alert--error"})
 
             return err_msg.get_text(strip=True)
 
@@ -81,12 +81,12 @@ class MPDriver(WebDriver):
             err_page = err_pages[0]
 
             if not isinstance(err_page, Tag):
-                raise ElementNotFound(tag_name="div", attrs={"class": "hz-ErrorPage-message"})
+                raise ElementNotFoundError(tag_name="div", attrs={"class": "hz-ErrorPage-message"})
 
             err_div = err_page.find("div", class_="u-textStyleTitle3")
 
             if not isinstance(err_div, Tag):
-                raise ElementNotFound(tag_name="div", attrs={"class": "u-textStyleTitle3"})
+                raise ElementNotFoundError(tag_name="div", attrs={"class": "u-textStyleTitle3"})
 
             return err_div.get_text(strip=True)
 

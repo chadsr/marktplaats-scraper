@@ -3,18 +3,17 @@ import logging
 import os
 import signal
 from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple
 
 import pandas as pd
 from tqdm import tqdm
 
-from .display import get_virtual_display, has_display
-from .exceptions import CategoriesError, ListingsError, ListingsInterrupt, NotFoundError
+from .display import get_virtual_display, has_display, is_display_running
+from .exceptions import CategoriesError, ListingsError, ListingsInterruptError, NotFoundError
 from .mpscraper import MpScraper
 
 if TYPE_CHECKING:
-    from pyvirtualdisplay.display import Display
-
     from .listing import Listing
 from .utils import (
     diff_hours,
@@ -24,6 +23,13 @@ from .utils import (
     remove_duplicate_listings,
     save_listings,
 )
+
+if TYPE_CHECKING:
+    from xvfbwrapper import Xvfb
+
+    from .listing import Listing
+
+logger = logging.getLogger(__name__)
 
 ENV_PREFIX = "MP_"
 ENV_LIMIT = f"{ENV_PREFIX}LIMIT"
@@ -159,116 +165,125 @@ def main():
 
     logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO)
     args = get_args()
-    logging.info(args)
+    logger.info(args)
 
-    # if no display is available and we aren't headless, create a virtual display
-    display: Display | None = None
+    # Only start a virtual display (Xvfb) if no display is found and not running headless
+    display: Xvfb | None = None
     if not has_display() and not args.headless:
+        logger.info("No display found. Starting virtual display...")
         display = get_virtual_display()
 
-        if not display.is_alive():
-            raise DisplayNotFound()
+        if not is_display_running(display):
+            raise DisplayNotFound("Failed to start virtual display")
 
-    listings_df = pd.DataFrame()
-    item_ids: set[str] = set()
-
-    listings_file_path = os.path.join(args.data_dir, DEFAULT_LISTINGS_FILE)
-    if os.path.isfile(listings_file_path):
-        has_duplicates = False
-        listings_df = read_csv(listings_file_path)
-        if "item_id" in listings_df.columns:
-            for item_id in list(listings_df["item_id"]):
-                if item_id not in item_ids:
-                    item_ids.add(item_id)
-                else:
-                    has_duplicates = True
-
-        if has_duplicates:
-            logging.info("Removing duplicate existing listings...")
-            listings_df = remove_duplicate_listings(listings_df)
-            save_listings(listings_df=listings_df, file_path=listings_file_path)
-
-        # recrawl listings with >= recrawl_hours since last crawl
-        now_datetime = get_utc_now()
-        for _, listing in listings_df.iterrows():
-            item_id: str = str(listing["item_id"])
-            crawled_timestamp: str = str(listing["crawled_timestamp"])
-            crawled_datetime = datetime.fromisoformat(crawled_timestamp)
-            diff_hours_now = diff_hours(crawled_datetime, now_datetime)
-            if diff_hours_now >= args.recrawl_hours:
-                item_ids.remove(item_id)
-
-    if not os.path.isfile(args.chromium_path):
-        raise NotFoundError(f"Chromium not found at: {args.chromium_path}")
-
-    if args.chromedriver_path and not os.path.isfile(args.chromedriver_path):
-        raise NotFoundError(f"ChromeDriver not found at: {args.chromedriver_path} ")
-
-    mp_scraper = MpScraper(
-        chromium_path=args.chromium_path,
-        chromedriver_path=args.chromedriver_path,
-        headless=args.headless,
-        timeout_seconds=args.timeout_seconds,
-        wait_seconds=args.wait_seconds,
-    )
-
-    parent_categories = mp_scraper.get_parent_categories()
-    if len(parent_categories) == 0:
-        raise CategoriesError("No parent categories found")
+        logger.info("Virtual display started successfully")
 
     try:
-        remaining_limit = args.limit
-        total = args.limit if args.limit > 0 else None
-        stop = False
+        listings_df = pd.DataFrame()
+        item_ids: set[str] = set()
 
-        with tqdm(desc="Total Progress", total=total, position=0) as pbar:
-            for parent_category in parent_categories:
-                listings: list[Listing] = []
+        listings_file_path = Path(args.data_dir) / DEFAULT_LISTINGS_FILE
+        if listings_file_path.is_file():
+            has_duplicates = False
+            listings_df = read_csv(str(listings_file_path))
+            if "item_id" in listings_df:
+                for item_id in list(listings_df["item_id"]):
+                    if item_id not in item_ids:
+                        item_ids.add(item_id)
+                    else:
+                        has_duplicates = True
 
-                if stop:
-                    break
+            if has_duplicates:
+                logger.info("Removing duplicate existing listings...")
+                listings_df = remove_duplicate_listings(listings_df)
+                save_listings(listings_df=listings_df, file_path=str(listings_file_path))
 
-                try:
-                    listings = mp_scraper.get_listings(
-                        parent_category=parent_category,
-                        limit=remaining_limit,
-                        existing_item_ids=item_ids,
-                    )
+            # recrawl listings with >= recrawl_hours since last crawl
+            now_datetime = get_utc_now()
+            for _, listing in listings_df.iterrows():
+                item_id: str = str(listing["item_id"])
+                crawled_timestamp: str = str(listing["crawled_timestamp"])
+                crawled_datetime = datetime.fromisoformat(crawled_timestamp)
+                diff_hours_now = diff_hours(crawled_datetime, now_datetime)
+                if diff_hours_now >= args.recrawl_hours:
+                    item_ids.remove(item_id)
 
-                    listings_count = len(listings)
-                    remaining_limit = remaining_limit - listings_count
-                    pbar.update(listings_count)
+        if not Path(args.chromium_path).is_file():
+            raise NotFoundError(f"Chromium not found at: {args.chromium_path}")
 
-                    if remaining_limit < 1:
+        if args.chromedriver_path and not Path(args.chromedriver_path).is_file():
+            raise NotFoundError(f"ChromeDriver not found at: {args.chromedriver_path} ")
+
+        mp_scraper = MpScraper(
+            chromium_path=args.chromium_path,
+            chromedriver_path=args.chromedriver_path,
+            headless=args.headless,
+            timeout_seconds=args.timeout_seconds,
+            wait_seconds=args.wait_seconds,
+        )
+
+        parent_categories = mp_scraper.get_parent_categories()
+        if len(parent_categories) == 0:
+            raise CategoriesError("No parent categories found")
+
+        try:
+            remaining_limit = args.limit
+            total = args.limit if args.limit > 0 else None
+            stop = False
+
+            with tqdm(desc="Total Progress", total=total, position=0) as pbar:
+                for parent_category in parent_categories:
+                    listings: list[Listing] = []
+
+                    if stop:
+                        break
+
+                    try:
+                        listings = mp_scraper.get_listings(
+                            parent_category=parent_category,
+                            limit=remaining_limit,
+                            existing_item_ids=item_ids,
+                        )
+
+                        listings_count = len(listings)
+                        remaining_limit = remaining_limit - listings_count
+                        pbar.update(listings_count)
+
+                        if remaining_limit < 1:
+                            stop = True
+                    except ListingsInterruptError as exc:
+                        logger.info("Stopping gracefully...")
+                        listings = exc.listings
                         stop = True
-                except ListingsInterrupt as exc:
-                    logging.info("Stopping gracefully...")
-                    listings = exc.listings
-                    stop = True
-                except ListingsError as exc:
-                    listings = exc.listings
-                    stop = True
-                except KeyboardInterrupt:
-                    stop = True
+                    except ListingsError as exc:
+                        listings = exc.listings
+                        stop = True
+                    except KeyboardInterrupt:
+                        stop = True
 
-                if len(listings) > 0:
-                    # concatenate the category's listings into the main dataframe
-                    category_df = pd.DataFrame(listings)
-                    listings_df = pd.concat([listings_df, category_df], ignore_index=True)
+                    if len(listings) > 0:
+                        # concatenate the category's listings into the main dataframe
+                        category_df = pd.DataFrame(listings)
+                        listings_df = pd.concat([listings_df, category_df], ignore_index=True)
 
-        mp_scraper.close()
-    except Exception as exc:
-        mp_scraper.close()
-        raise exc
+            mp_scraper.close()
+        except Exception as exc:
+            mp_scraper.close()
+            raise exc
 
-    if len(listings_df.index) > 0:
-        logging.info("Saving listings to %s", listings_file_path)
+        if len(listings_df.index) > 0:
+            logger.info("Saving listings to %s", listings_file_path)
 
-        # remove any duplicates from recrawling
-        listings_df = remove_duplicate_listings(listings_df)
-        save_listings(listings_df=listings_df, file_path=listings_file_path)
-    else:
-        logging.warning("Nothing to save.")
+            # remove any duplicates from recrawling
+            listings_df = remove_duplicate_listings(listings_df)
+            save_listings(listings_df=listings_df, file_path=str(listings_file_path))
+        else:
+            logger.warning("Nothing to save.")
+    finally:
+        # Clean up virtual display if it was started
+        if display is not None:
+            logger.info("Stopping virtual display...")
+            display.stop()
 
 
 if __name__ == "__main__":

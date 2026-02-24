@@ -3,8 +3,8 @@ from collections.abc import Iterable
 from datetime import timedelta
 
 import pytest
-from pyvirtualdisplay.display import Display
 from selenium.webdriver.chrome.webdriver import WebDriver
+from xvfbwrapper import Xvfb
 
 from mpscraper.display import get_virtual_display, has_display
 from mpscraper.driver import MPDriver
@@ -30,7 +30,7 @@ LIMIT_LARGE = 10
 
 
 @pytest.fixture(scope="session")
-def display() -> Display | None:
+def display() -> Xvfb | None:
     if not has_display():
         return get_virtual_display()
 
@@ -83,12 +83,10 @@ def mp_scraper() -> Iterable[MpScraper]:
 
 
 class TestMpScraper:
-    def test_get_listings_limit(self, mp_scraper: MpScraper, display: Display | None):
+    def test_get_listings_limit(self, mp_scraper: MpScraper):
         """
         Assert that get_listings returns exactly the limit quantity and all are unique
         """
-        if display and not display.is_alive():
-            _ = display.start()
 
         limits = [LIMIT_SMALL, LIMIT_LARGE]
         for limit in limits:
@@ -103,16 +101,14 @@ class TestMpScraper:
                 assert listing.item_id not in item_ids
                 item_ids.add(listing.item_id)
 
-    def test_get_listings_existing_item_ids(self, mp_scraper: MpScraper, display: Display | None):
+    def test_get_listings_existing_item_ids(self, mp_scraper: MpScraper):
         """
         Assert that item_ids passed to existing_item_ids are excluded from the results
         """
-        if display and not display.is_alive():
-            _ = display.start()
 
         listings_initial = mp_scraper.get_listings(parent_category=TEST_CATEGORY, limit=LIMIT_SMALL)
         assert len(listings_initial) == LIMIT_SMALL
-        item_ids_initial = set([listing.item_id for listing in listings_initial])
+        item_ids_initial = {listing.item_id for listing in listings_initial}
         assert len(item_ids_initial) == len(listings_initial)
 
         listings_excl_initial = mp_scraper.get_listings(
