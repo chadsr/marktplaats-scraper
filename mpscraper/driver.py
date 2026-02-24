@@ -5,7 +5,7 @@ from selenium.webdriver import ChromeOptions, ChromeService
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .exceptions import ElementNotFound, ForbiddenError, MPError
@@ -49,7 +49,7 @@ class MPDriver(WebDriver):
         """Accept the cookies banner."""
 
         self.get(url)
-        element_present = EC.presence_of_element_located((By.ID, MODAL_ID))
+        element_present = expected_conditions.presence_of_element_located((By.ID, MODAL_ID))
         WebDriverWait(self, ACCEPT_COOKIES_TIMEOUT_SECONDS).until(element_present)
         accept_btn = self.find_element(by=By.CSS_SELECTOR, value=BTN_COOKIES_ACCEPT_ARIA_LABEL)
         accept_btn.click()
