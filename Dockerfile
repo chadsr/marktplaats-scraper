@@ -1,5 +1,5 @@
 
-FROM docker.io/python:3.14-alpine
+FROM python:3.14-alpine
 
 ARG MP_USER="mp"
 ARG MP_GROUP="mp"
@@ -12,9 +12,8 @@ LABEL org.opencontainers.image.title="marktplaats-scraper" \
 
 ENV PYTHONUNBUFFERED=1
 
-# install chromium & deps
 RUN apk update
-RUN apk add --no-cache --update chromium chromium-chromedriver xvfb gcc musl-dev libffi-dev linux-headers g++ build-base python3-dev uv
+RUN apk add --no-cache --update chromium chromium-chromedriver xvfb uv
 
 RUN addgroup -g ${MP_GID} -S ${MP_GROUP} && adduser -u ${MP_UID} -S ${MP_USER} -G ${MP_GROUP}
 
@@ -32,6 +31,6 @@ COPY --chown=${MP_USER}:${MP_GROUP} ./uv.lock ./uv.lock
 COPY --chown=${MP_USER}:${MP_GROUP} ./README.md ./README.md
 COPY --chown=${MP_USER}:${MP_GROUP} ./LICENSE ./LICENSE
 
-RUN poetry install --compile --without=dev
+RUN uv sync --no-group dev
 
-CMD [ "uv", "run", "mpscraper", "--chromium-path", "/usr/bin/chromium-browser", "--driver-path", "/usr/bin/chromedriver", "--data-dir", "/data" ]
+CMD [ "uv", "run", "--no-group", "dev", "mpscraper", "--chromium-path", "/usr/bin/chromium-browser", "--driver-path", "/usr/bin/chromedriver", "--data-dir", "/data" ]
