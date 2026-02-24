@@ -1,9 +1,10 @@
-from datetime import datetime
+from __future__ import annotations
+
 import json
 import logging
-import re
+from datetime import datetime
 from time import sleep
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from bs4 import Tag
 from selenium.common.exceptions import TimeoutException, WebDriverException
@@ -103,22 +104,25 @@ class MpScraper:
         self.__driver.get(self.__base_url)
         soup = self.__driver.get_soup()
         category_li_elem_name = "li"
-        category_li_elem_attrs = {"class": "CategoriesBlock-listItem"}
-        category_li_elems = soup.findAll(category_li_elem_name, attrs=category_li_elem_attrs)
+        category_li_elem_attrs: dict[str, str] = {"class": "CategoriesBlock-listItem"}
+        category_li_elems = soup.find_all(category_li_elem_name, class_="CategoriesBlock-listItem")
 
         for category_li_elem in category_li_elems:
             if not isinstance(category_li_elem, Tag):
                 raise ElementNotFound(tag_name=category_li_elem_name, attrs=category_li_elem_attrs)
 
             category_a_elem_name = "a"
-            category_a_elem_attrs = {"class": "hz-Link--navigation"}
+            category_a_elem_attrs: dict[str, str] = {"class": "hz-Link--navigation"}
             category_a_elem = category_li_elem.find(
-                name=category_a_elem_name, attrs=category_a_elem_attrs
+                name=category_a_elem_name, class_="hz-Link--navigation"
             )
             if not isinstance(category_a_elem, Tag):
                 raise ElementNotFound(tag_name=category_a_elem_name, attrs=category_a_elem_attrs)
 
-            href_split = category_a_elem.attrs["href"].split("/")
+            href = category_a_elem.get("href")
+            if href is None:
+                raise ElementNotFound(tag_name=category_a_elem_name, attrs=category_a_elem_attrs)
+            href_split = str(href).split("/")
             category_id = int(href_split[2])
             category_url = f"{self.__base_url}/l/{href_split[3]}"
             category = Category(id=category_id, url=category_url)
@@ -147,7 +151,10 @@ class MpScraper:
             raise ElementNotFound(tag_name="script", attrs={"id": DATA_ELEM_ID})
 
         try:
-            next_data = json.loads(next_data_script.string)
+            script_text = next_data_script.string
+            if script_text is None:
+                raise ElementNotFound(tag_name="script", attrs={"id": DATA_ELEM_ID})
+            next_data = json.loads(script_text)
             page_props = next_data.get("props", {}).get("pageProps", {})
             search_data = page_props.get("searchRequestAndResponse", {})
 
@@ -198,7 +205,10 @@ class MpScraper:
             raise ElementNotFound(tag_name="script", attrs={"id": DATA_ELEM_ID})
 
         try:
-            next_data = json.loads(next_data_script.string)
+            script_text = next_data_script.string
+            if script_text is None:
+                raise ElementNotFound(tag_name="script", attrs={"id": DATA_ELEM_ID})
+            next_data = json.loads(script_text)
             page_props = next_data.get("props", {}).get("pageProps", {})
             search_data = page_props.get("searchRequestAndResponse", {})
 
@@ -225,8 +235,8 @@ class MpScraper:
         page = self.__driver.get_soup()
 
         description_div_name = "div"
-        description_div_attrs = {"class": "Description-description"}
-        description_div = page.find(name=description_div_name, attrs=description_div_attrs)
+        description_div_attrs: dict[str, str] = {"class": "Description-description"}
+        description_div = page.find(name=description_div_name, class_="Description-description")
         if not isinstance(description_div, Tag):
             raise ElementNotFound(tag_name=description_div_name, attrs=description_div_attrs)
 
@@ -246,7 +256,7 @@ class MpScraper:
                     attribute_value = attribute_item.find("span", {"class": "Attributes-value"})
                     if isinstance(attribute_value, Tag):
                         attribute_text = attribute_value.get_text(strip=True)
-                        values = set()
+                        values: set[str] = set()
                         if ", " in attribute_text:
                             values = set(attribute_text.split(", "))
                         else:
@@ -284,7 +294,7 @@ class MpScraper:
     def get_listings(
         self, parent_category: Category, limit: int, existing_item_ids: set[str] | None = None
     ) -> list[Listing]:
-        """Return a list of Marktplaats listings for the given category, up to limit in quantity, and excluding item_ids from existing_item_ids."""
+        """Return Marktplaats listings for the category up to limit, excluding existing_item_ids."""
         listings: list[Listing] = []
         item_ids: set[str] = existing_item_ids.copy() if existing_item_ids is not None else set()
         parent_category_slug = parent_category.url.split("/")[-1]
@@ -329,18 +339,17 @@ class MpScraper:
 
                         # Get the next.js props JSON object
                         page_data_script_name = "script"
-                        page_data_script_attrs = {"id": DATA_ELEM_ID}
-                        page_data_script = page.find(
-                            name=page_data_script_name, attrs=page_data_script_attrs
-                        )
+                        page_data_script_attrs: dict[str, str] = {"id": DATA_ELEM_ID}
+                        page_data_script = page.find(name=page_data_script_name, id=DATA_ELEM_ID)
                         if not isinstance(page_data_script, Tag):
                             raise ElementNotFound(
                                 tag_name=page_data_script_name,
                                 attrs=page_data_script_attrs,
                             )
 
-                        page_data = json.loads(page_data_script.text)
-                        res_listings: list[dict] = page_data["props"]["pageProps"][
+                        page_data_text = page_data_script.text
+                        page_data: dict[str, Any] = json.loads(page_data_text)
+                        res_listings: list[dict[str, Any]] = page_data["props"]["pageProps"][
                             "searchRequestAndResponse"
                         ]["listings"]
 
@@ -363,7 +372,7 @@ class MpScraper:
 
                             # skip if we already have this item_id
                             if item_id in item_ids:
-                                # if limit is set to max listings then decrease the maximum fetch-able listings count
+                                # if limit is max listings, decrease max fetch-able count
                                 if limit == listings_count:
                                     max_listings -= 1
                                     pbar.total = max_listings
@@ -399,7 +408,7 @@ class MpScraper:
                                     except ForbiddenError:
                                         # wait
                                         logging.warning(
-                                            "Got rate-limited. Retrying for listing %s in %d seconds...",
+                                            "Rate-limited. Retrying listing %s in %ds...",
                                             item_id,
                                             self.__wait_seconds,
                                         )
@@ -507,8 +516,7 @@ class MpScraper:
                         if exc.msg and "ERR_INTERNET_DISCONNECTED" in exc.msg:
                             sleep(self.__timeout_seconds)
                             continue
-                        else:
-                            raise exc
+                        raise exc
                     except KeyboardInterrupt as exc:
                         raise ListingsInterrupt(listings=listings) from exc
                     except Exception as exc:

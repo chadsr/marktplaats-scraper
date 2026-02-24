@@ -1,18 +1,21 @@
 import argparse
-from datetime import datetime
 import logging
 import os
 import signal
-from typing import NamedTuple
+from datetime import datetime
+from typing import TYPE_CHECKING, NamedTuple
 
 import pandas as pd
-from pyvirtualdisplay.display import Display
 from tqdm import tqdm
 
 from .display import get_virtual_display, has_display
 from .exceptions import CategoriesError, ListingsError, ListingsInterrupt, NotFoundError
-from .listing import Listing
 from .mpscraper import MpScraper
+
+if TYPE_CHECKING:
+    from pyvirtualdisplay.display import Display
+
+    from .listing import Listing
 from .utils import (
     diff_hours,
     get_utc_now,
@@ -104,7 +107,7 @@ def get_args() -> Args:
         "-r",
         type=float,
         default=DEFAULT_RECRAWL_HOURS,
-        help=f"Recrawl listings that haven't been checked for this many hours or more ({ENV_RECRAWL_HOURS})",
+        help=f"Recrawl listings not checked for this many hours or more ({ENV_RECRAWL_HOURS})",
     )
 
     parser.add_argument(
@@ -173,7 +176,7 @@ def main():
     if os.path.isfile(listings_file_path):
         has_duplicates = False
         listings_df = read_csv(listings_file_path)
-        if "item_id" in listings_df.keys():
+        if "item_id" in listings_df.columns:
             for item_id in list(listings_df["item_id"]):
                 if item_id not in item_ids:
                     item_ids.add(item_id)

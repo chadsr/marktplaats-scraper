@@ -1,0 +1,47 @@
+name: CI
+permissions:
+  contents: read
+on:
+  pull_request:
+    paths:
+      - "mpscraper/**"
+      - "tests/**"
+      - "uv.lock"
+      - "pyproject.toml"
+      - ".github/workflows/ci.yml"
+  push:
+    branches:
+      - "main"
+    paths:
+      - "mpscraper/**"
+      - "tests/**"
+      - "uv.lock"
+      - "pyproject.toml"
+      - ".github/workflows/ci.yml"
+jobs:
+  lint:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+        with:
+          activate-environment: true
+      - name: Lint
+        run: uv run prek --all-files
+  test:
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+        with:
+          activate-environment: true
+      - name: Install dependencies
+        run: uv sync --all-groups
+      - name: Run Pytest
+        run: |
+          pytest ./tests
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

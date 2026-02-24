@@ -9,6 +9,7 @@ class ListingsError(Exception):
         listings: list[Listing],
         msg: str | None = None,
     ):
+        super().__init__(msg)
         self.msg = msg
         self.listings = listings
 
@@ -17,7 +18,7 @@ class ListingsError(Exception):
 
 
 class ListingsInterrupt(ListingsError):
-    """ListingsInterrupt provides an exception for keyboard interrupts, where listings can be recovered."""
+    """Exception for keyboard interrupts, where listings can be recovered."""
 
     def __str__(self):
         return "Listings Interrupted"
@@ -27,6 +28,7 @@ class MPError(Exception):
     """MPError represents errors returned by Martkplaats."""
 
     def __init__(self, msg: str | None = None):
+        super().__init__(msg)
         self.msg = msg
 
     def __str__(self):
@@ -55,9 +57,10 @@ class NotFoundError(MPError):
 
 
 class UnexpectedStatusCode(Exception):
-    """UnexpectedStatusCode is raised when an unexpected HTTP response status code is encountered."""
+    """Raised when an unexpected HTTP response status code is encountered."""
 
     def __init__(self, status_code: int):
+        super().__init__(f"Unexpected status code: {status_code}")
         self.status_code = status_code
 
     def __str__(self):
@@ -68,6 +71,7 @@ class ElementNotFound(Exception):
     """ElementNotFound is raised when an expected element is not found."""
 
     def __init__(self, tag_name: str, attrs: dict[str, str] | None = None):
+        super().__init__(f"Element not found with tag name {tag_name} and attributes: {attrs}")
         self.tag_name = tag_name
         self.attrs = attrs
 
@@ -79,6 +83,7 @@ class UnexpectedCategoryId(Exception):
     """UnexpectedCategoryId is raised when a page's category ID does not match the expected ID."""
 
     def __init__(self, got: int, exp: int):
+        super().__init__(f"Unexpected category ID, expected {exp} but got {got}")
         self.got = got
         self.exp = exp
 
@@ -90,6 +95,7 @@ class ConfigNotFound(Exception):
     """ConfigNotFound is raised when a configuration file is not found at the provided path."""
 
     def __init__(self, path: str):
+        super().__init__(f"Config file not found at: {path}")
         self.path: str = path
 
     def __str__(self):
