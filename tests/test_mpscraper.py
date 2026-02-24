@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import pytest
 
+from mpscraper.display import get_virtual_display, has_display, is_display_running
 from mpscraper.listing import Listing
 from mpscraper.mpscraper import (
     MARKTPLAATS_ADVERTISEMENT_PREFIX,
@@ -34,17 +35,29 @@ def mp_scraper() -> Iterable[MpScraper]:
     if CHROMEDRIVER_PATH and CHROMEDRIVER_PATH != "":
         chromedriver_path = CHROMEDRIVER_PATH
 
-    mp_scraper = MpScraper(
-        headless=False,
-        timeout_seconds=TEST_DRIVER_TIMEOUT_SECONDS,
-        wait_seconds=TEST_WAIT_SECONDS,
-        chromium_path=chromium_path,
-        chromedriver_path=chromedriver_path,
-    )
+    # Start virtual display if no display is available
+    display = None
+    if not has_display():
+        display = get_virtual_display()
+        if not is_display_running(display):
+            raise RuntimeError("Failed to start virtual display")
 
-    yield mp_scraper
+    try:
+        mp_scraper = MpScraper(
+            headless=False,
+            timeout_seconds=TEST_DRIVER_TIMEOUT_SECONDS,
+            wait_seconds=TEST_WAIT_SECONDS,
+            chromium_path=chromium_path,
+            chromedriver_path=chromedriver_path,
+        )
 
-    mp_scraper.close()
+        yield mp_scraper
+
+        mp_scraper.close()
+    finally:
+        # Clean up virtual display if it was started
+        if display is not None:
+            display.stop()
 
 
 class TestMpScraper:
