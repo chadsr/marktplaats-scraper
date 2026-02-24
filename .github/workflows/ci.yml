@@ -32,6 +32,7 @@ jobs:
     runs-on: "ubuntu-latest"
     timeout-minutes: 10
     steps:
+      - uses: browser-actions/setup-chrome@v2
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
         with:
