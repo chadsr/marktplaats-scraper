@@ -3,11 +3,7 @@ from collections.abc import Iterable
 from datetime import timedelta
 
 import pytest
-from selenium.webdriver.chrome.webdriver import WebDriver
-from xvfbwrapper import Xvfb
 
-from mpscraper.display import get_virtual_display, has_display
-from mpscraper.driver import MPDriver
 from mpscraper.listing import Listing
 from mpscraper.mpscraper import (
     MARKTPLAATS_ADVERTISEMENT_PREFIX,
@@ -17,7 +13,6 @@ from mpscraper.mpscraper import (
 )
 from mpscraper.utils import diff_hours, format_text, get_utc_now
 
-TEST_RUN_HEADLESS = False
 CHROMIUM_PATH = os.getenv("CHROMIUM_PATH")
 CHROMEDRIVER_PATH = os.getenv("CHROMEDRIVER_PATH")
 
@@ -27,36 +22,6 @@ TEST_DRIVER_TIMEOUT_SECONDS = 30
 
 LIMIT_SMALL = 2
 LIMIT_LARGE = 10
-
-
-@pytest.fixture(scope="session")
-def display() -> Xvfb | None:
-    if not has_display():
-        return get_virtual_display()
-
-    return None
-
-
-@pytest.fixture(scope="function")
-def driver() -> Iterable[WebDriver]:
-    chromium_path: str | None = None
-    if CHROMIUM_PATH and CHROMIUM_PATH != "":
-        chromium_path = CHROMIUM_PATH
-
-    chromedriver_path: str | None = None
-    if CHROMEDRIVER_PATH and CHROMEDRIVER_PATH != "":
-        chromedriver_path = CHROMEDRIVER_PATH
-
-    driver = MPDriver(
-        chromedriver_path=chromedriver_path,
-        chromium_path=chromium_path,
-        base_url=MARTKPLAATS_BASE_URL,
-        headless=TEST_RUN_HEADLESS,
-    )
-
-    yield driver
-    # after
-    driver.quit()
 
 
 @pytest.fixture(scope="function")
@@ -70,7 +35,7 @@ def mp_scraper() -> Iterable[MpScraper]:
         chromedriver_path = CHROMEDRIVER_PATH
 
     mp_scraper = MpScraper(
-        headless=TEST_RUN_HEADLESS,
+        headless=False,
         timeout_seconds=TEST_DRIVER_TIMEOUT_SECONDS,
         wait_seconds=TEST_WAIT_SECONDS,
         chromium_path=chromium_path,
