@@ -34,9 +34,10 @@ class MPDriver(WebDriver):
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-setuid-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-extensions")
 
         if headless:
-            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--headless=new")
 
         if chromium_path:
             chrome_options.binary_location = chromium_path
