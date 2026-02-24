@@ -133,67 +133,53 @@ class MpScraper:
         self.__driver.get(parent_category.url)
 
         try:
-            categories_present = EC.presence_of_element_located((By.ID, str(parent_category.id)))
-            _ = WebDriverWait(self.__driver, self.__timeout_seconds).until(categories_present)
+            # Wait for page to load
+            content_present = EC.presence_of_element_located((By.ID, CONTENT_ID))
+            _ = WebDriverWait(self.__driver, self.__timeout_seconds).until(content_present)
         except TimeoutException:
             return subcategories
 
         soup = self.__driver.get_soup()
 
-        category_id_elems_name = "select"
-        category_id_elems_attrs = {"id": SELECT_ELEM_ID}
-        category_id_elems = soup.find(name=category_id_elems_name, attrs=category_id_elems_attrs)
-        if not isinstance(category_id_elems, Tag):
-            raise ElementNotFound(tag_name=category_id_elems_name, attrs=category_id_elems_attrs)
+        # Parse __NEXT_DATA__ JSON for category information
+        next_data_script = soup.find("script", id=DATA_ELEM_ID, type="application/json")
+        if not isinstance(next_data_script, Tag):
+            raise ElementNotFound(tag_name="script", attrs={"id": DATA_ELEM_ID})
 
-        category_id_list_name = "div"
-        category_id_list_attrs = {"id": str(parent_category.id)}
-        category_id_list = soup.find(category_id_list_name, attrs=category_id_list_attrs)
-        if not isinstance(category_id_list, Tag):
-            raise ElementNotFound(tag_name=category_id_list_name, attrs=category_id_list_attrs)
+        try:
+            next_data = json.loads(next_data_script.string)
+            page_props = next_data.get("props", {}).get("pageProps", {})
+            search_data = page_props.get("searchRequestAndResponse", {})
 
-        category_hrefs: dict[str, str] = {}
-        subcategory_a_elem_name = "a"
-        subcategory_a_elem_attrs = {"class": "category-name"}
-        subcategory_a_elems = soup.findAll(subcategory_a_elem_name, attrs=subcategory_a_elem_attrs)
-        for subcategory_a_elem in subcategory_a_elems:
-            if not isinstance(subcategory_a_elem, Tag):
-                raise ElementNotFound(tag_name=subcategory_a_elem)
+            # Get subcategories from searchCategoryOptions
+            category_options = search_data.get("searchCategoryOptions", [])
 
-            if "href" not in subcategory_a_elem.attrs:
-                # TODO: Raise error
-                continue
+            for option in category_options:
+                # Skip if it's the parent category itself or all categories
+                option_id = option.get("id")
+                if option_id is None:
+                    continue
 
-            category_name = str(subcategory_a_elem.contents[0])
-            category_href = str(subcategory_a_elem.attrs["href"])
-            category_hrefs[category_name] = category_href
+                if option_id == parent_category.id or option_id == ALL_CATEGORIES_ID:
+                    continue
 
-        subcategory_option_elem_name = "option"
-        subcategory_option_elems = category_id_elems.findAll(name=subcategory_option_elem_name)
-        for subcategory_option_elem in subcategory_option_elems:
-            if not isinstance(subcategory_option_elem, Tag):
-                raise ElementNotFound(tag_name=subcategory_option_elem_name)
+                # Only include subcategories (those with parentId matching parent)
+                parent_id = option.get("parentId")
+                if parent_id is not None and parent_id == parent_category.id:
+                    # Build URL from key and parentKey
+                    key = option.get("key", "")
+                    parent_key = option.get("parentKey", "")
+                    if key and parent_key:
+                        subcategory_url = f"{MARTKPLAATS_BASE_URL}/l/{parent_key}/{key}"
+                    else:
+                        # Fallback: use fullName or construct from ID
+                        subcategory_url = f"{MARTKPLAATS_BASE_URL}/c{option_id}"
 
-            subcategory_name = str(subcategory_option_elem.contents[0])
+                    subcategory = Category(id=option_id, url=subcategory_url)
+                    subcategories.add(subcategory)
 
-            if "value" not in subcategory_option_elem.attrs:
-                continue
-
-            subcategory_value = subcategory_option_elem.attrs["value"]
-            if subcategory_value == "":
-                continue
-
-            subcategory_id = int(subcategory_value)
-
-            if subcategory_id == parent_category.id or subcategory_id == ALL_CATEGORIES_ID:
-                continue
-
-            # get subcategory href
-            subcategory_href = category_hrefs[subcategory_name]
-
-            subcategory_url = f"{MARTKPLAATS_BASE_URL}{subcategory_href}"
-            subcategory = Category(id=subcategory_id, url=subcategory_url)
-            subcategories.add(subcategory)
+        except (json.JSONDecodeError, KeyError, AttributeError) as e:
+            logging.warning(f"Failed to parse category data from __NEXT_DATA__: {e}")
 
         return subcategories
 
@@ -206,33 +192,24 @@ class MpScraper:
 
         soup = self.__driver.get_soup()
 
-        label_altijd_name = "label"
-        label_altijd_attrs = {"for": "offeredSince-Altijd"}
-        label_altijd = soup.find(name=label_altijd_name, attrs=label_altijd_attrs)
-        if isinstance(label_altijd, Tag):
-            span_altijd_counter_name = "span"
-            span_altijd_counter_attrs = {"class": "hz-SelectionInput-Counter"}
-            span_altijd_counter = label_altijd.find(
-                name=span_altijd_counter_name, attrs=span_altijd_counter_attrs
-            )
-            if isinstance(span_altijd_counter, Tag):
-                altijd_counter_name = "span"
-                altijd_counter_attrs = {"class": "hz-Text"}
-                altijd_counter = span_altijd_counter.find(
-                    name=altijd_counter_name, attrs=altijd_counter_attrs
-                )
-                if isinstance(altijd_counter, Tag):
-                    count_text = altijd_counter.get_text(strip=True)
-                    count_text = re.sub("[.,()]", "", count_text)
-                    return int(count_text)
-                else:
-                    raise ElementNotFound(tag_name=altijd_counter_name, attrs=altijd_counter_attrs)
-            else:
-                raise ElementNotFound(
-                    tag_name=span_altijd_counter_name, attrs=span_altijd_counter_attrs
-                )
-        else:
-            raise ElementNotFound(tag_name=label_altijd_name, attrs=label_altijd_attrs)
+        # Parse __NEXT_DATA__ JSON for total listing count
+        next_data_script = soup.find("script", id=DATA_ELEM_ID, type="application/json")
+        if not isinstance(next_data_script, Tag):
+            raise ElementNotFound(tag_name="script", attrs={"id": DATA_ELEM_ID})
+
+        try:
+            next_data = json.loads(next_data_script.string)
+            page_props = next_data.get("props", {}).get("pageProps", {})
+            search_data = page_props.get("searchRequestAndResponse", {})
+
+            total_count = search_data.get("totalResultCount")
+            if total_count is None:
+                raise ElementNotFound(tag_name="totalResultCount", attrs={})
+
+            return int(total_count)
+
+        except (json.JSONDecodeError, KeyError, AttributeError) as e:
+            raise ElementNotFound(tag_name="totalResultCount", attrs={}) from e
 
     def __get_listing_details(self, listing_url: str) -> ListingDetails:
         """Return the full description, listing type and service attributes."""
