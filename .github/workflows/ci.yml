@@ -32,10 +32,6 @@ jobs:
     runs-on: "ubuntu-latest"
     timeout-minutes: 10
     steps:
-      - name: Install xvfb & chromium-browser
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb chromium-browser
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
         with:
