@@ -22,7 +22,7 @@ dependencies = [
     "lxml>=6.0.2",
     "selenium>=4.38.0",
     "tqdm>=4.67.1",
-    "PyVirtualDisplay>=3.0",
+    "xvfbwrapper>=0.2.9",
     "pandas>=2.3.3",
 ]
 
@@ -90,6 +90,7 @@ skip_covered = false
 [tool.ruff]
 line-length = 100
 include = ["mpscraper/**/*.py", "tests/**/*.py", "examples/**/*.ipynb"]
+exclude = ["typings"]
 
 [tool.ruff.lint]
 select = [
@@ -107,7 +108,7 @@ select = [
 
 [tool.basedpyright]
 include = ["mpscraper", "tests"]
-exclude = ["examples"]
+exclude = ["examples", "typings"]
 stubPath = "typings"
 reportMissingImports = "error"
 reportMissingTypeStubs = true

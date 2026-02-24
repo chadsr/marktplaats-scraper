@@ -3,11 +3,8 @@ from collections.abc import Iterable
 from datetime import timedelta
 
 import pytest
-from pyvirtualdisplay.display import Display
-from selenium.webdriver.chrome.webdriver import WebDriver
 
-from mpscraper.display import get_virtual_display, has_display
-from mpscraper.driver import MPDriver
+from mpscraper.display import get_virtual_display, has_display, is_display_running
 from mpscraper.listing import Listing
 from mpscraper.mpscraper import (
     MARKTPLAATS_ADVERTISEMENT_PREFIX,
@@ -17,7 +14,6 @@ from mpscraper.mpscraper import (
 )
 from mpscraper.utils import diff_hours, format_text, get_utc_now
 
-TEST_RUN_HEADLESS = False
 CHROMIUM_PATH = os.getenv("CHROMIUM_PATH")
 CHROMEDRIVER_PATH = os.getenv("CHROMEDRIVER_PATH")
 
@@ -27,36 +23,6 @@ TEST_DRIVER_TIMEOUT_SECONDS = 30
 
 LIMIT_SMALL = 2
 LIMIT_LARGE = 10
-
-
-@pytest.fixture(scope="session")
-def display() -> Display | None:
-    if not has_display():
-        return get_virtual_display()
-
-    return None
-
-
-@pytest.fixture(scope="function")
-def driver() -> Iterable[WebDriver]:
-    chromium_path: str | None = None
-    if CHROMIUM_PATH and CHROMIUM_PATH != "":
-        chromium_path = CHROMIUM_PATH
-
-    chromedriver_path: str | None = None
-    if CHROMEDRIVER_PATH and CHROMEDRIVER_PATH != "":
-        chromedriver_path = CHROMEDRIVER_PATH
-
-    driver = MPDriver(
-        chromedriver_path=chromedriver_path,
-        chromium_path=chromium_path,
-        base_url=MARTKPLAATS_BASE_URL,
-        headless=TEST_RUN_HEADLESS,
-    )
-
-    yield driver
-    # after
-    driver.quit()
 
 
 @pytest.fixture(scope="function")
@@ -69,26 +35,36 @@ def mp_scraper() -> Iterable[MpScraper]:
     if CHROMEDRIVER_PATH and CHROMEDRIVER_PATH != "":
         chromedriver_path = CHROMEDRIVER_PATH
 
-    mp_scraper = MpScraper(
-        headless=TEST_RUN_HEADLESS,
-        timeout_seconds=TEST_DRIVER_TIMEOUT_SECONDS,
-        wait_seconds=TEST_WAIT_SECONDS,
-        chromium_path=chromium_path,
-        chromedriver_path=chromedriver_path,
-    )
+    # Start virtual display if no display is available
+    display = None
+    if not has_display():
+        display = get_virtual_display()
+        if not is_display_running(display):
+            raise RuntimeError("Failed to start virtual display")
 
-    yield mp_scraper
+    try:
+        mp_scraper = MpScraper(
+            headless=False,
+            timeout_seconds=TEST_DRIVER_TIMEOUT_SECONDS,
+            wait_seconds=TEST_WAIT_SECONDS,
+            chromium_path=chromium_path,
+            chromedriver_path=chromedriver_path,
+        )
 
-    mp_scraper.close()
+        yield mp_scraper
+
+        mp_scraper.close()
+    finally:
+        # Clean up virtual display if it was started
+        if display is not None:
+            display.stop()
 
 
 class TestMpScraper:
-    def test_get_listings_limit(self, mp_scraper: MpScraper, display: Display | None):
+    def test_get_listings_limit(self, mp_scraper: MpScraper):
         """
         Assert that get_listings returns exactly the limit quantity and all are unique
         """
-        if display and not display.is_alive():
-            _ = display.start()
 
         limits = [LIMIT_SMALL, LIMIT_LARGE]
         for limit in limits:
@@ -103,16 +79,14 @@ class TestMpScraper:
                 assert listing.item_id not in item_ids
                 item_ids.add(listing.item_id)
 
-    def test_get_listings_existing_item_ids(self, mp_scraper: MpScraper, display: Display | None):
+    def test_get_listings_existing_item_ids(self, mp_scraper: MpScraper):
         """
         Assert that item_ids passed to existing_item_ids are excluded from the results
         """
-        if display and not display.is_alive():
-            _ = display.start()
 
         listings_initial = mp_scraper.get_listings(parent_category=TEST_CATEGORY, limit=LIMIT_SMALL)
         assert len(listings_initial) == LIMIT_SMALL
-        item_ids_initial = set([listing.item_id for listing in listings_initial])
+        item_ids_initial = {listing.item_id for listing in listings_initial}
         assert len(item_ids_initial) == len(listings_initial)
 
         listings_excl_initial = mp_scraper.get_listings(

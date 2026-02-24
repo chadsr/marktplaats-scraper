@@ -1,6 +1,6 @@
 import os
 
-from pyvirtualdisplay.display import Display
+from xvfbwrapper import Xvfb
 
 
 def has_display() -> bool:
@@ -8,6 +8,13 @@ def has_display() -> bool:
     return "DISPLAY" in os.environ
 
 
-def get_virtual_display(width: int = 1920, height: int = 1080) -> Display:
+def get_virtual_display(width: int = 1920, height: int = 1080) -> Xvfb:
     """Return an initialised virtual display using xvfb."""
-    return Display(backend="xvfb", size=(width, height)).start()
+    display = Xvfb(width=width, height=height)
+    display.start()
+    return display
+
+
+def is_display_running(display: Xvfb) -> bool:
+    """Check if the virtual display is running."""
+    return display.proc is not None  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]

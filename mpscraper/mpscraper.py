@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime
 from logging import Logger
 from time import sleep
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 from bs4 import BeautifulSoup, Tag
 from selenium.common.exceptions import TimeoutException, WebDriverException
@@ -405,7 +406,7 @@ class MpScraper:
                                     except ForbiddenError:
                                         # wait
                                         logger.warning(
-                                            "Got rate-limited. Retrying for listing %s in %d seconds...",
+                                            "Got rate-limited. Retrying %s in %d seconds",
                                             item_id,
                                             self.__wait_seconds,
                                         )

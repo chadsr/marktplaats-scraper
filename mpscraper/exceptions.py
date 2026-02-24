@@ -18,7 +18,7 @@ class ListingsError(Exception):
 
 
 class ListingsInterruptError(ListingsError):
-    """ListingsInterruptError provides an exception for keyboard interrupts, where listings can be recovered."""
+    """ListingsInterruptError provides an interrupt error with recoverable listings."""
 
     def __str__(self):
         return "Listings Interrupted"
@@ -56,17 +56,6 @@ class NotFoundError(MPError):
         return f"Not found error: {self.msg}"
 
 
-class UnexpectedStatusCodeError(Exception):
-    """UnexpectedStatusCodeError is raised when an unexpected HTTP response status code is encountered."""
-
-    def __init__(self, status_code: int):
-        super().__init__(f"Unexpected status code: {status_code}")
-        self.status_code = status_code
-
-    def __str__(self):
-        return f"Unexpected status code: {self.status_code}"
-
-
 class ElementNotFoundError(Exception):
     """ElementNotFoundError is raised when an expected element is not found."""
 
@@ -80,7 +69,7 @@ class ElementNotFoundError(Exception):
 
 
 class UnexpectedCategoryIdError(Exception):
-    """UnexpectedCategoryIdError is raised when a page's category ID does not match the expected ID."""
+    """UnexpectedCategoryIdError is raised when a page has an unexpected category."""
 
     def __init__(self, got: int, exp: int):
         super().__init__(f"Unexpected category ID, expected {exp} but got {got}")

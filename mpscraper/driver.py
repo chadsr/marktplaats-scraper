@@ -11,15 +11,11 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
-from .exceptions import ElementNotFound, ForbiddenError, MPError
+from .exceptions import ElementNotFoundError, ForbiddenError, MPError
 
 if TYPE_CHECKING:
     from selenium.webdriver.remote.webelement import WebElement
 
-MODAL_ID = "notice"
-BTN_COOKIES_ACCEPT_ARIA_LABEL = "[aria-label=Accepteren]"
-
-ACCEPT_COOKIES_TIMEOUT_SECONDS = 30
 MARKTPLAATS_403_URL = "https://www.marktplaats.nl/403/"
 
 
@@ -38,9 +34,13 @@ class MPDriver(WebDriver):
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-setuid-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-extensions")
 
         if headless:
-            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--headless=new")
+
+        if chromium_path:
+            chrome_options.binary_location = chromium_path
 
         chrome_service: ChromeService | None = None
         if chromedriver_path:
@@ -71,22 +71,16 @@ class MPDriver(WebDriver):
         if len(err_msgs) > 0:
             err_msg = err_msgs[0]
 
-            if not isinstance(err_msg, Tag):
-                raise ElementNotFound(tag_name="p", attrs={"class": "mp-Alert--error"})
-
             return err_msg.get_text(strip=True)
 
         err_pages = soup.find_all("div", class_="hz-ErrorPage-message")
         if len(err_pages) > 0:
             err_page = err_pages[0]
 
-            if not isinstance(err_page, Tag):
-                raise ElementNotFound(tag_name="div", attrs={"class": "hz-ErrorPage-message"})
-
             err_div = err_page.find("div", class_="u-textStyleTitle3")
 
             if not isinstance(err_div, Tag):
-                raise ElementNotFound(tag_name="div", attrs={"class": "u-textStyleTitle3"})
+                raise ElementNotFoundError(tag_name="div", attrs={"class": "u-textStyleTitle3"})
 
             return err_div.get_text(strip=True)
 

@@ -283,9 +283,9 @@ dependencies = [
     { name = "beautifulsoup4" },
     { name = "lxml" },
     { name = "pandas" },
-    { name = "pyvirtualdisplay" },
     { name = "selenium" },
     { name = "tqdm" },
+    { name = "xvfbwrapper" },
 ]
 
 [package.dev-dependencies]
@@ -304,9 +304,9 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.14.3" },
     { name = "lxml", specifier = ">=6.0.2" },
     { name = "pandas", specifier = ">=2.3.3" },
-    { name = "pyvirtualdisplay", specifier = ">=3.0" },
     { name = "selenium", specifier = ">=4.38.0" },
     { name = "tqdm", specifier = ">=4.67.1" },
+    { name = "xvfbwrapper", specifier = ">=0.2.9" },
 ]
 
 [package.metadata.requires-dev]
@@ -566,15 +566,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pyvirtualdisplay"
-version = "3.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/86/9f/23e5a82987c26d225139948a224a93318d7a7c8b166d4dbe4de7426dc4e4/PyVirtualDisplay-3.0.tar.gz", hash = "sha256:09755bc3ceb6eb725fb07eca5425f43f2358d3bf08e00d2a9b792a1aedd16159", size = 18560, upload-time = "2022-02-13T07:57:05.783Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/90/eb/c3b8deb661cb3846db63288c99bbb39f217b7807fc8acb2fd058db41e2e6/PyVirtualDisplay-3.0-py3-none-any.whl", hash = "sha256:40d4b8dfe4b8de8552e28eb367647f311f88a130bf837fe910e7f180d5477f0e", size = 15258, upload-time = "2022-02-13T07:57:04.051Z" },
-]
-
-[[package]]
 name = "pyyaml"
 version = "6.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -804,4 +795,13 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c7/79/12135bdf8b9c9367b8701c2c19a14c913c120b882d50b014ca0d38083c2c/wsproto-1.3.2.tar.gz", hash = "sha256:b86885dcf294e15204919950f666e06ffc6c7c114ca900b060d6e16293528294", size = 50116, upload-time = "2025-11-20T18:18:01.871Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a4/f5/10b68b7b1544245097b2a1b8238f66f2fc6dcaeb24ba5d917f52bd2eed4f/wsproto-1.3.2-py3-none-any.whl", hash = "sha256:61eea322cdf56e8cc904bd3ad7573359a242ba65688716b0710a5eb12beab584", size = 24405, upload-time = "2025-11-20T18:18:00.454Z" },
+]
+
+[[package]]
+name = "xvfbwrapper"
+version = "0.2.20"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/64/06/541f858c7f91b0fc62bc8dc065b28d33a17e88c393d693e717f3c4972d83/xvfbwrapper-0.2.20.tar.gz", hash = "sha256:a28a27105b16f88c689c52ca5b9fac34b4c68aad0a80b270fbad723f6f778f5b", size = 12527, upload-time = "2026-02-20T04:54:43.644Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5c/11/a94e50f84f395fcb05fedfd4caf60480336d430ce93426765f036f2bb6ef/xvfbwrapper-0.2.20-py3-none-any.whl", hash = "sha256:08c5ff09594f4f579d251d5e1e85621fef043e4275b98efd14811b1d0f2ee8d3", size = 7091, upload-time = "2026-02-20T04:54:42.832Z" },
 ]
