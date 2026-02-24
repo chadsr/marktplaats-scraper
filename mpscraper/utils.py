@@ -45,8 +45,7 @@ def remove_duplicate_listings(df: pd.DataFrame) -> pd.DataFrame:
 
     if df_no_dupes is not None:
         return df_no_dupes
-    else:
-        raise EmptyDataFrameError()
+    raise EmptyDataFrameError()
 
 
 def save_listings(listings_df: pd.DataFrame, file_path: str):
@@ -66,6 +65,4 @@ def format_text(text: str) -> str:
     def remove_multi_whitespace(text: str) -> str:
         return " ".join(text.split())
 
-    fmt = remove_multi_whitespace(text)
-
-    return fmt
+    return remove_multi_whitespace(text)

@@ -1,28 +1,31 @@
-from datetime import datetime
+from __future__ import annotations
+
 import json
 import logging
-import re
+from logging import Logger
 from time import sleep
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
-from bs4 import Tag
+from bs4 import BeautifulSoup, Tag
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from tqdm import tqdm
 
 from .driver import MPDriver
 from .exceptions import (
-    ElementNotFound,
+    ElementNotFoundError,
     ForbiddenError,
     ListingsError,
-    ListingsInterrupt,
+    ListingsInterruptError,
     MPError,
-    UnexpectedCategoryId,
+    UnexpectedCategoryIdError,
 )
 from .listing import Listing, ListingDetails
 from .utils import format_text, get_utc_iso_now
+
+logger: Logger = logging.getLogger(__name__)
 
 MARTKPLAATS_BASE_URL = "https://marktplaats.nl"
 REQUEST_OPTS = "#sortBy:SORT_INDEX|sortOrder:DECREASING"
@@ -102,23 +105,20 @@ class MpScraper:
 
         self.__driver.get(self.__base_url)
         soup = self.__driver.get_soup()
-        category_li_elem_name = "li"
-        category_li_elem_attrs = {"class": "CategoriesBlock-listItem"}
-        category_li_elems = soup.findAll(category_li_elem_name, attrs=category_li_elem_attrs)
+        category_li_elems = soup.find_all("li", class_="CategoriesBlock-listItem")
 
         for category_li_elem in category_li_elems:
             if not isinstance(category_li_elem, Tag):
-                raise ElementNotFound(tag_name=category_li_elem_name, attrs=category_li_elem_attrs)
+                raise ElementNotFoundError(
+                    tag_name="li", attrs={"class": "CategoriesBlock-listItem"}
+                )
 
-            category_a_elem_name = "a"
-            category_a_elem_attrs = {"class": "hz-Link--navigation"}
-            category_a_elem = category_li_elem.find(
-                name=category_a_elem_name, attrs=category_a_elem_attrs
-            )
+            category_a_elem = category_li_elem.find("a", class_="hz-Link--navigation")
             if not isinstance(category_a_elem, Tag):
-                raise ElementNotFound(tag_name=category_a_elem_name, attrs=category_a_elem_attrs)
+                raise ElementNotFoundError(tag_name="a", attrs={"class": "hz-Link--navigation"})
 
-            href_split = category_a_elem.attrs["href"].split("/")
+            href_val = category_a_elem.attrs.get("href", "")
+            href_split = str(href_val).split("/") if not isinstance(href_val, list) else []
             category_id = int(href_split[2])
             category_url = f"{self.__base_url}/l/{href_split[3]}"
             category = Category(id=category_id, url=category_url)
@@ -133,66 +133,55 @@ class MpScraper:
         self.__driver.get(parent_category.url)
 
         try:
-            categories_present = EC.presence_of_element_located((By.ID, str(parent_category.id)))
-            _ = WebDriverWait(self.__driver, self.__timeout_seconds).until(categories_present)
+            # Wait for page to load
+            content_present = expected_conditions.presence_of_element_located((By.ID, CONTENT_ID))
+            _ = WebDriverWait(self.__driver, self.__timeout_seconds).until(content_present)
         except TimeoutException:
             return subcategories
 
-        soup = self.__driver.get_soup()
+        soup: BeautifulSoup = self.__driver.get_soup()
 
-        category_id_elems_name = "select"
-        category_id_elems_attrs = {"id": SELECT_ELEM_ID}
-        category_id_elems = soup.find(name=category_id_elems_name, attrs=category_id_elems_attrs)
-        if not isinstance(category_id_elems, Tag):
-            raise ElementNotFound(tag_name=category_id_elems_name, attrs=category_id_elems_attrs)
+        next_data_script = soup.find("script", {"id": DATA_ELEM_ID, "type": "application/json"})
+        if not (isinstance(next_data_script, Tag) and next_data_script.string):
+            raise ElementNotFoundError(tag_name="script", attrs={"id": DATA_ELEM_ID})
 
-        category_id_list_name = "div"
-        category_id_list_attrs = {"id": str(parent_category.id)}
-        category_id_list = soup.find(category_id_list_name, attrs=category_id_list_attrs)
-        if not isinstance(category_id_list, Tag):
-            raise ElementNotFound(tag_name=category_id_list_name, attrs=category_id_list_attrs)
+        next_data = json.loads(next_data_script.string)
 
-        category_hrefs: dict[str, str] = {}
-        subcategory_a_elem_name = "a"
-        subcategory_a_elem_attrs = {"class": "category-name"}
-        subcategory_a_elems = soup.findAll(subcategory_a_elem_name, attrs=subcategory_a_elem_attrs)
-        for subcategory_a_elem in subcategory_a_elems:
-            if not isinstance(subcategory_a_elem, Tag):
-                raise ElementNotFound(tag_name=subcategory_a_elem)
+        # Navigate to searchCategoryOptions which contains all subcategories
+        page_props = next_data.get("props", {}).get("pageProps")
+        search_data = page_props.get("searchRequestAndResponse")
+        category_options = search_data.get("searchCategoryOptions")
 
-            if "href" not in subcategory_a_elem.attrs:
-                # TODO: Raise error
+        if not category_options:
+            raise ElementNotFoundError("No searchCategoryOptions found in __NEXT_DATA__")
+
+        # Extract subcategories (skip the first item which is the parent category)
+        for cat_option in category_options:
+            cat_id = cat_option.get("id")
+            cat_key = cat_option.get("key")
+            parent_id = cat_option.get("parentId")
+
+            # Skip if this is the parent category itself or missing required fields
+            if cat_id == parent_category.id or not cat_id or not cat_key:
                 continue
 
-            category_name = str(subcategory_a_elem.contents[0])
-            category_href = str(subcategory_a_elem.attrs["href"])
-            category_hrefs[category_name] = category_href
-
-        subcategory_option_elem_name = "option"
-        subcategory_option_elems = category_id_elems.findAll(name=subcategory_option_elem_name)
-        for subcategory_option_elem in subcategory_option_elems:
-            if not isinstance(subcategory_option_elem, Tag):
-                raise ElementNotFound(tag_name=subcategory_option_elem_name)
-
-            subcategory_name = str(subcategory_option_elem.contents[0])
-
-            if "value" not in subcategory_option_elem.attrs:
+            # Only include subcategories (those with parentId matching parent)
+            if parent_id is None or parent_id != parent_category.id:
                 continue
 
-            subcategory_value = subcategory_option_elem.attrs["value"]
-            if subcategory_value == "":
-                continue
+            # Build the subcategory URL
+            if parent_id:
+                # This is a child category - construct URL with parent path
+                parent_key = cat_option.get("parentKey", "")
+                if parent_key:
+                    subcategory_url = f"{MARTKPLAATS_BASE_URL}/l/{parent_key}/{cat_key}/"
+                else:
+                    subcategory_url = f"{MARTKPLAATS_BASE_URL}/l/{cat_key}/"
+            else:
+                # This is a top-level category (shouldn't happen but handle it)
+                subcategory_url = f"{MARTKPLAATS_BASE_URL}/l/{cat_key}/"
 
-            subcategory_id = int(subcategory_value)
-
-            if subcategory_id == parent_category.id or subcategory_id == ALL_CATEGORIES_ID:
-                continue
-
-            # get subcategory href
-            subcategory_href = category_hrefs[subcategory_name]
-
-            subcategory_url = f"{MARTKPLAATS_BASE_URL}{subcategory_href}"
-            subcategory = Category(id=subcategory_id, url=subcategory_url)
+            subcategory = Category(id=cat_id, url=subcategory_url)
             subcategories.add(subcategory)
 
         return subcategories
@@ -201,45 +190,45 @@ class MpScraper:
         """Return the listings count for the given category URL."""
         self.__driver.get(category.url)
 
-        page_content_present = EC.presence_of_element_located((By.ID, CONTENT_ID))
-        _ = WebDriverWait(self.__driver, self.__timeout_seconds).until(page_content_present)
+        try:
+            page_content_present = expected_conditions.presence_of_element_located(
+                (By.ID, CONTENT_ID)
+            )
+            _ = WebDriverWait(self.__driver, self.__timeout_seconds).until(page_content_present)
+        except TimeoutException:
+            pass
 
+        # Get the page source and parse the __NEXT_DATA__ JSON
         soup = self.__driver.get_soup()
 
-        label_altijd_name = "label"
-        label_altijd_attrs = {"for": "offeredSince-Altijd"}
-        label_altijd = soup.find(name=label_altijd_name, attrs=label_altijd_attrs)
-        if isinstance(label_altijd, Tag):
-            span_altijd_counter_name = "span"
-            span_altijd_counter_attrs = {"class": "hz-SelectionInput-Counter"}
-            span_altijd_counter = label_altijd.find(
-                name=span_altijd_counter_name, attrs=span_altijd_counter_attrs
-            )
-            if isinstance(span_altijd_counter, Tag):
-                altijd_counter_name = "span"
-                altijd_counter_attrs = {"class": "hz-Text"}
-                altijd_counter = span_altijd_counter.find(
-                    name=altijd_counter_name, attrs=altijd_counter_attrs
-                )
-                if isinstance(altijd_counter, Tag):
-                    count_text = altijd_counter.get_text(strip=True)
-                    count_text = re.sub("[.,()]", "", count_text)
-                    return int(count_text)
-                else:
-                    raise ElementNotFound(tag_name=altijd_counter_name, attrs=altijd_counter_attrs)
-            else:
-                raise ElementNotFound(
-                    tag_name=span_altijd_counter_name, attrs=span_altijd_counter_attrs
-                )
-        else:
-            raise ElementNotFound(tag_name=label_altijd_name, attrs=label_altijd_attrs)
+        next_data_script = soup.find("script", {"id": DATA_ELEM_ID, "type": "application/json"})
+        if not (isinstance(next_data_script, Tag) and next_data_script.string):
+            raise ElementNotFoundError(tag_name="script", attrs={"id": DATA_ELEM_ID})
+
+        try:
+            next_data = json.loads(next_data_script.string)
+
+            # Navigate to totalResultCount
+            page_props = next_data.get("props", {}).get("pageProps", {})
+            search_data = page_props.get("searchRequestAndResponse", {})
+            total_count = search_data.get("totalResultCount")
+
+            if total_count is None:
+                raise ElementNotFoundError(tag_name="totalResultCount", attrs={})
+
+            return int(total_count)
+
+        except (json.JSONDecodeError, KeyError, AttributeError, ValueError) as e:
+            raise ElementNotFoundError(tag_name=DATA_ELEM_ID, attrs={"error": str(e)}) from e
 
     def __get_listing_details(self, listing_url: str) -> ListingDetails:
         """Return the full description, listing type and service attributes."""
         self.__driver.get(listing_url)
 
         try:
-            listing_present = EC.presence_of_element_located((By.ID, LISTING_ROOT_ID))
+            listing_present = expected_conditions.presence_of_element_located(
+                (By.ID, LISTING_ROOT_ID)
+            )
             _ = WebDriverWait(self.__driver, self.__timeout_seconds).until(listing_present)
         except TimeoutException:
             # pass since we catch errors next
@@ -247,11 +236,9 @@ class MpScraper:
 
         page = self.__driver.get_soup()
 
-        description_div_name = "div"
-        description_div_attrs = {"class": "Description-description"}
-        description_div = page.find(name=description_div_name, attrs=description_div_attrs)
+        description_div = page.find("div", class_="Description-description")
         if not isinstance(description_div, Tag):
-            raise ElementNotFound(tag_name=description_div_name, attrs=description_div_attrs)
+            raise ElementNotFoundError(tag_name="div", attrs={"class": "Description-description"})
 
         description = description_div.get_text(separator=" ", strip=True)
 
@@ -259,17 +246,17 @@ class MpScraper:
         services: set[str] = set()
 
         # Parse type/service attributes
-        attribute_items = page.find_all("div", {"class": "Attributes-item"})
+        attribute_items = page.find_all("div", class_="Attributes-item")
         for attribute_item in attribute_items:
             if isinstance(attribute_item, Tag):
-                attribute_label = attribute_item.find("strong", {"class": "Attributes-label"})
+                attribute_label = attribute_item.find("strong", class_="Attributes-label")
                 if isinstance(attribute_label, Tag):
                     attribute_label_text = attribute_label.get_text(strip=True).lower()
 
-                    attribute_value = attribute_item.find("span", {"class": "Attributes-value"})
+                    attribute_value = attribute_item.find("span", class_="Attributes-value")
                     if isinstance(attribute_value, Tag):
                         attribute_text = attribute_value.get_text(strip=True)
-                        values = set()
+                        values: set[str] = set()
                         if ", " in attribute_text:
                             values = set(attribute_text.split(", "))
                         else:
@@ -307,7 +294,7 @@ class MpScraper:
     def get_listings(
         self, parent_category: Category, limit: int, existing_item_ids: set[str] | None = None
     ) -> list[Listing]:
-        """Return a list of Marktplaats listings for the given category, up to limit in quantity, and excluding item_ids from existing_item_ids."""
+        """Return Marktplaats listings for the category up to limit, excluding existing_item_ids."""
         listings: list[Listing] = []
         item_ids: set[str] = existing_item_ids.copy() if existing_item_ids is not None else set()
         parent_category_slug = parent_category.url.split("/")[-1]
@@ -325,7 +312,7 @@ class MpScraper:
             if len(subcategories) > 0:
                 categories = list(subcategories)
             else:
-                logging.warning(
+                logger.warning(
                     "No sub-categories found. Using parent category %s (%d)",
                     parent_category_slug,
                     parent_category.id,
@@ -351,24 +338,20 @@ class MpScraper:
                         page = self.__driver.get_soup()
 
                         # Get the next.js props JSON object
-                        page_data_script_name = "script"
-                        page_data_script_attrs = {"id": DATA_ELEM_ID}
-                        page_data_script = page.find(
-                            name=page_data_script_name, attrs=page_data_script_attrs
-                        )
+                        page_data_script = page.find("script", id=DATA_ELEM_ID)
                         if not isinstance(page_data_script, Tag):
-                            raise ElementNotFound(
-                                tag_name=page_data_script_name,
-                                attrs=page_data_script_attrs,
+                            raise ElementNotFoundError(
+                                tag_name="script",
+                                attrs={"id": DATA_ELEM_ID},
                             )
 
-                        page_data = json.loads(page_data_script.text)
-                        res_listings: list[dict] = page_data["props"]["pageProps"][
-                            "searchRequestAndResponse"
-                        ]["listings"]
+                        page_data = json.loads(page_data_script.text or "{}")
+                        res_listings = page_data["props"]["pageProps"]["searchRequestAndResponse"][
+                            "listings"
+                        ]
 
                         if len(res_listings) == 0:
-                            logging.info(
+                            logger.info(
                                 "Ran out of listings for %s at page %i",
                                 category_url,
                                 current_page,
@@ -386,7 +369,7 @@ class MpScraper:
 
                             # skip if we already have this item_id
                             if item_id in item_ids:
-                                # if limit is set to max listings then decrease the maximum fetch-able listings count
+                                # if limit is max listings, decrease max fetch-able count
                                 if limit == listings_count:
                                     max_listings -= 1
                                     pbar.total = max_listings
@@ -396,7 +379,7 @@ class MpScraper:
                             # Get category ID
                             child_category_id: int = int(res_listing["categoryId"])
                             if child_category_id != category_id:
-                                raise UnexpectedCategoryId(child_category_id, category_id)
+                                raise UnexpectedCategoryIdError(child_category_id, category_id)
 
                             # Get basic info
                             title: str = format_text(str(res_listing["title"]))
@@ -421,7 +404,7 @@ class MpScraper:
                                         got_details = True
                                     except ForbiddenError:
                                         # wait
-                                        logging.warning(
+                                        logger.warning(
                                             "Got rate-limited. Retrying for listing %s in %d seconds...",
                                             item_id,
                                             self.__wait_seconds,
@@ -429,14 +412,14 @@ class MpScraper:
                                         sleep(self.__wait_seconds)
                                         continue
                             except MPError as exc:
-                                logging.error(
+                                logger.error(
                                     "Error fetching listing %s details Exception: %s",
                                     listing_url,
                                     str(exc),
                                 )
 
-                            except ElementNotFound as exc:
-                                logging.error(
+                            except ElementNotFoundError as exc:
+                                logger.error(
                                     "Unexpected element in listing %s Exception: %s",
                                     listing_url,
                                     str(exc),
@@ -503,39 +486,39 @@ class MpScraper:
                         current_page += 1
 
                     except ForbiddenError:
-                        logging.warning(
-                            f"Probably rate-limited. waiting {self.__timeout_seconds} seconds..."
+                        logger.warning(
+                            "Probably rate-limited. waiting %d seconds...",
+                            self.__timeout_seconds,
                         )
                         sleep(self.__timeout_seconds)
                         continue
                     except MPError as exc:
-                        logging.error(
+                        logger.error(
                             "Error crawling URL: %s Exception: %s",
                             category_url,
                             str(exc),
                         )
                         continue
-                    except ElementNotFound as exc:
-                        logging.error(
+                    except ElementNotFoundError as exc:
+                        logger.error(
                             "Unexpected element for category URL: %s Exception: %s",
                             category_url,
                             str(exc),
                         )
                         continue
                     except TimeoutException as exc:
-                        logging.warning("%s", str(exc))
+                        logger.warning("%s", str(exc))
                         continue
                     except WebDriverException as exc:
-                        logging.error("%s", str(exc))
+                        logger.error("%s", str(exc))
                         if exc.msg and "ERR_INTERNET_DISCONNECTED" in exc.msg:
                             sleep(self.__timeout_seconds)
                             continue
-                        else:
-                            raise exc
+                        raise exc
                     except KeyboardInterrupt as exc:
-                        raise ListingsInterrupt(listings=listings) from exc
+                        raise ListingsInterruptError(listings=listings) from exc
                     except Exception as exc:
-                        logging.exception(exc)
+                        logger.exception(exc)
                         raise ListingsError(
                             listings=listings, msg=f"Error getting listings: {exc}"
                         ) from exc

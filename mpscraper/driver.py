@@ -1,14 +1,20 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from bs4 import BeautifulSoup as Soup
 from bs4 import Tag
 from selenium.common.exceptions import StaleElementReferenceException, WebDriverException
-from selenium.webdriver import ChromeOptions, ChromeService
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.wait import WebDriverWait
 
 from .exceptions import ElementNotFound, ForbiddenError, MPError
+
+if TYPE_CHECKING:
+    from selenium.webdriver.remote.webelement import WebElement
 
 MODAL_ID = "notice"
 BTN_COOKIES_ACCEPT_ARIA_LABEL = "[aria-label=Accepteren]"
@@ -39,20 +45,9 @@ class MPDriver(WebDriver):
         chrome_service: ChromeService | None = None
         if chromedriver_path:
             chrome_service = ChromeService(executable_path=chromedriver_path)
-            super(MPDriver, self).__init__(options=chrome_options, service=chrome_service)
+            super().__init__(options=chrome_options, service=chrome_service)
         else:
-            super(MPDriver, self).__init__(options=chrome_options)
-
-        # self.__accept_cookies(url=base_url)
-
-    def __accept_cookies(self, url: str) -> None:
-        """Accept the cookies banner."""
-
-        self.get(url)
-        element_present = EC.presence_of_element_located((By.ID, MODAL_ID))
-        WebDriverWait(self, ACCEPT_COOKIES_TIMEOUT_SECONDS).until(element_present)
-        accept_btn = self.find_element(by=By.CSS_SELECTOR, value=BTN_COOKIES_ACCEPT_ARIA_LABEL)
-        accept_btn.click()
+            super().__init__(options=chrome_options)
 
     def __get_forbidden_iframe(self) -> WebElement | None:
         """Return the forbidden iframe, or None if it does not exist."""
@@ -72,42 +67,33 @@ class MPDriver(WebDriver):
     @staticmethod
     def __get_mp_err_text(soup: Soup) -> str | None:
         """Return the error text from the given Marktplaats page, or None."""
-        err_msg_name = "p"
-        err_msg_attrs = {"class": "mp-Alert--error"}
-        err_msgs = soup.find_all("p", attrs=err_msg_attrs)
+        err_msgs = soup.find_all("p", class_="mp-Alert--error")
         if len(err_msgs) > 0:
             err_msg = err_msgs[0]
-            err_text = ""
 
             if not isinstance(err_msg, Tag):
-                raise ElementNotFound(tag_name=err_msg_name, attrs=err_msg_attrs)
+                raise ElementNotFound(tag_name="p", attrs={"class": "mp-Alert--error"})
 
-            err_text = err_msg.get_text(strip=True)
-            return err_text
+            return err_msg.get_text(strip=True)
 
-        err_pages_name = "div"
-        err_pages_attrs = {"class": "hz-ErrorPage-message"}
-        err_pages = soup.find_all(name=err_pages_name, attrs=err_pages_attrs)
+        err_pages = soup.find_all("div", class_="hz-ErrorPage-message")
         if len(err_pages) > 0:
             err_page = err_pages[0]
 
             if not isinstance(err_page, Tag):
-                raise ElementNotFound(tag_name=err_pages_name, attrs=err_pages_attrs)
+                raise ElementNotFound(tag_name="div", attrs={"class": "hz-ErrorPage-message"})
 
-            err_div_name = "div"
-            err_div_attrs = {"class": "u-textStyleTitle3"}
-            err_div = err_page.find(name=err_div_name, attrs=err_div_attrs)
+            err_div = err_page.find("div", class_="u-textStyleTitle3")
 
             if not isinstance(err_div, Tag):
-                raise ElementNotFound(tag_name=err_div_name, attrs=err_div_attrs)
+                raise ElementNotFound(tag_name="div", attrs={"class": "u-textStyleTitle3"})
 
-            err_text = err_div.get_text(strip=True)
-            return err_text
+            return err_div.get_text(strip=True)
 
         return None
 
     def get_soup(self) -> Soup:
-        """Return a BeautifulSoup object of the requested page, raising any Marktplaats specific errors found."""
+        """Return a BeautifulSoup object of the page, raising Marktplaats specific errors found."""
         src = self.page_source
 
         forbidden_iframe = self.__get_forbidden_iframe()

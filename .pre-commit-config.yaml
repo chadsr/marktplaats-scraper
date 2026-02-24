@@ -1,12 +1,27 @@
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.2
-    hooks:
-      - id: ruff
-      - id: ruff-format
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-      - id: check-docstring-first
       - id: check-yaml
+      - id: sort-simple-yaml
+      - id: check-toml
+      - id: trailing-whitespace
       - id: end-of-file-fixer
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.2
+    hooks:
+      - id: ruff-format
+      - id: ruff-check
+        args: [--fix]
+
+  - repo: https://github.com/DetachHead/basedpyright-prek-mirror
+    rev: "1.38.1"
+    hooks:
+      - id: basedpyright
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: "1.9.3"
+    hooks:
+      - id: bandit
+        args: [-c=pyproject.toml]

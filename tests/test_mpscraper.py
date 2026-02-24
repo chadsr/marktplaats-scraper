@@ -1,6 +1,6 @@
+import os
 from collections.abc import Iterable
 from datetime import timedelta
-import os
 
 import pytest
 from pyvirtualdisplay.display import Display
