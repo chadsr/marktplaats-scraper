@@ -799,9 +799,9 @@ wheels = [
 
 [[package]]
 name = "xvfbwrapper"
-version = "0.2.20"
+version = "0.2.21"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/64/06/541f858c7f91b0fc62bc8dc065b28d33a17e88c393d693e717f3c4972d83/xvfbwrapper-0.2.20.tar.gz", hash = "sha256:a28a27105b16f88c689c52ca5b9fac34b4c68aad0a80b270fbad723f6f778f5b", size = 12527, upload-time = "2026-02-20T04:54:43.644Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dd/bd/5425d7835abe711e2d7329763d30ec9a175ae3f88b2e0addcb7343882e0e/xvfbwrapper-0.2.21.tar.gz", hash = "sha256:bad4c7a0d60feea5f8c7cb0c58bc20dfb48225ca50207e4d9e80360e88b1ecc9", size = 13078, upload-time = "2026-02-26T21:09:30.759Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5c/11/a94e50f84f395fcb05fedfd4caf60480336d430ce93426765f036f2bb6ef/xvfbwrapper-0.2.20-py3-none-any.whl", hash = "sha256:08c5ff09594f4f579d251d5e1e85621fef043e4275b98efd14811b1d0f2ee8d3", size = 7091, upload-time = "2026-02-20T04:54:42.832Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/89/b4e34d9612ab2c6916533057f392c6e7513b8bdb2daf3442b6b3f78b0e1f/xvfbwrapper-0.2.21-py3-none-any.whl", hash = "sha256:77139907ecf7819b752d9dd5d7f65229c1c923e5093fa4ff2a0b166b42864cbb", size = 7093, upload-time = "2026-02-26T21:09:29.65Z" },
 ]
