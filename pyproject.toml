@@ -19,7 +19,7 @@ classifiers = [
 ]
 dependencies = [
     "beautifulsoup4>=4.14.3",
-    "lxml>=6.0.2",
+    "lxml>=6.1.0",
     "selenium>=4.38.0",
     "tqdm>=4.67.1",
     "xvfbwrapper>=0.2.9",
