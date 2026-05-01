@@ -306,7 +306,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "selenium", specifier = ">=4.38.0" },
     { name = "tqdm", specifier = ">=4.67.1" },
-    { name = "xvfbwrapper", specifier = ">=0.2.9" },
+    { name = "xvfbwrapper", specifier = ">=0.2.23" },
 ]
 
 [package.metadata.requires-dev]
@@ -799,9 +799,9 @@ wheels = [
 
 [[package]]
 name = "xvfbwrapper"
-version = "0.2.21"
+version = "0.2.23"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/dd/bd/5425d7835abe711e2d7329763d30ec9a175ae3f88b2e0addcb7343882e0e/xvfbwrapper-0.2.21.tar.gz", hash = "sha256:bad4c7a0d60feea5f8c7cb0c58bc20dfb48225ca50207e4d9e80360e88b1ecc9", size = 13078, upload-time = "2026-02-26T21:09:30.759Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/21/ab/65cf1481f9aff56d761f4864b5c090ed739609ccd23f491b8418e363b1eb/xvfbwrapper-0.2.23.tar.gz", hash = "sha256:ff318c00e74b60fb657843745c3e7de8df67e2ebd01f533b02747bcb9cabb826", size = 13130, upload-time = "2026-03-22T05:49:53.071Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0a/89/b4e34d9612ab2c6916533057f392c6e7513b8bdb2daf3442b6b3f78b0e1f/xvfbwrapper-0.2.21-py3-none-any.whl", hash = "sha256:77139907ecf7819b752d9dd5d7f65229c1c923e5093fa4ff2a0b166b42864cbb", size = 7093, upload-time = "2026-02-26T21:09:29.65Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/e0/36ceaecb09ac035c2d1aa15afc0a469b446aa692e2c549aed38c45e8da3a/xvfbwrapper-0.2.23-py3-none-any.whl", hash = "sha256:1ff01cd5f0e66cff683945155f9000ac9d1ae84832bf9642a096b610b523a70a", size = 7114, upload-time = "2026-03-22T05:49:52.027Z" },
 ]
