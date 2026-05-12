@@ -34,7 +34,7 @@ dev = [
     "pytest>=9.0.3",
     "ruff>=0.15.12",
     "pandas-stubs>=2.3.3.251219",
-    "prek>=0.3.3",
+    "prek>=0.3.11",
 ]
 
 [project.scripts]
